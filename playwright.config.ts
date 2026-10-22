@@ -14,7 +14,7 @@ export default defineConfig({
   webServer: [
     { command: 'npm run preview:creator', url: 'http://127.0.0.1:4173', reuseExistingServer: false },
     { command: 'npm run preview:player', url: 'http://127.0.0.1:4174', reuseExistingServer: false },
-    { command: 'npm run dev -- --port 5175', url: 'http://127.0.0.1:5175', reuseExistingServer: false },
-    { command: 'npm run dev:player -- --port 5176', url: 'http://127.0.0.1:5176', reuseExistingServer: false },
+    { command: 'npm run dev -- --port 5175 --mode smoke', url: 'http://127.0.0.1:5175', reuseExistingServer: false },
+    { command: 'npm run dev:player -- --port 5176 --mode smoke', url: 'http://127.0.0.1:5176', reuseExistingServer: false },
   ],
 });

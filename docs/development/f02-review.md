@@ -58,6 +58,8 @@ The first production run passed two tests, but checking both development servers
 
 ## Limits and next gate
 
+Review correction (2026-10-22): the user reported a blank creator page. Reproduced HTTP 504 responses for React's optimized modules on port 5173. App-specific caches alone were insufficient: smoke-test and manual-review instances of the same app still shared a cache. Both Vite configs now separate caches by app and mode; test development servers use `--mode smoke`, while manual review uses the default development mode. Ran `npm run check` again: all four checks passed (13.6 seconds). Then loaded and reloaded the original review URLs on ports 5173 and 5174 in Chromium: both rendered with no HTTP or browser errors. Reload an already-open blank tab to fetch the current module URLs. F02 remains awaiting user validation.
+
 - Vite reports a player chunk-size warning: the Phaser-containing JS bundle is about 1,368.43 kB minified / 357.73 kB gzip. The creator JS is about 220.69 kB / 69.04 kB gzip. The warning is retained; F02 makes no performance guarantee.
 - Only local Windows Chromium behavior was executed. GitHub Actions is configured for Linux, but no hosted run has been performed. Firefox, Safari, Edge qualification, mobile controls, and full accessibility testing remain later work.
 - Phaser's decorative boot scene is not the shared adventure renderer or preview lifecycle proof. Those belong to F04. No audio or project loading is exercised here.

@@ -55,7 +55,7 @@ For workspace-local browser downloads in PowerShell, set `$env:PLAYWRIGHT_BROWSE
 
 ## Repository and CI
 
-There is one private npm project and one lockfile. `apps/creator` uses React; `apps/player` uses Phaser without importing creator code. Vite configs select separate roots, dependency caches, and output folders with relative asset URLs. Separate caches prevent concurrent development servers from invalidating each other's optimized dependencies. Planned `packages/` directories will be introduced when F03/F04 need actual shared code.
+There is one private npm project and one lockfile. `apps/creator` uses React; `apps/player` uses Phaser without importing creator code. Vite configs select separate roots, dependency caches, and output folders with relative asset URLs. Caches are separated by app and mode; test servers use `--mode smoke` so they cannot invalidate the normal review servers' optimized dependencies. If an old tab shows a blank page after a configuration change, reload it to fetch current module URLs. Planned `packages/` directories will be introduced when F03/F04 need actual shared code.
 
 The GitHub Actions [workflow](../../.github/workflows/check.yml) runs on pushes and pull requests with read-only repository permissions. It installs the pinned Node version, runs `npm ci`, installs Chromium, and runs `npm run check`; failed runs upload browser evidence. Linux CI configuration is provided, but a successful hosted run must be observed separately from local Windows results.
 

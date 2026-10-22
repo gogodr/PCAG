@@ -2,9 +2,9 @@ import { fileURLToPath } from 'node:url';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   root: fileURLToPath(new URL('./apps/creator', import.meta.url)),
-  cacheDir: fileURLToPath(new URL('./node_modules/.vite/creator', import.meta.url)),
+  cacheDir: fileURLToPath(new URL(`./node_modules/.vite/creator/${mode}`, import.meta.url)),
   base: './',
   plugins: [react()],
   server: { host: '127.0.0.1', port: 5173, strictPort: true },
@@ -13,4 +13,4 @@ export default defineConfig({
     outDir: fileURLToPath(new URL('./dist/creator', import.meta.url)),
     emptyOutDir: true,
   },
-});
+}));
