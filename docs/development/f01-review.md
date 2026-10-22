@@ -1,6 +1,6 @@
 # F01 review: foundation decisions
 
-Date: 2026-10-22. Status: Awaiting user validation. User acceptance: pending.
+Date: 2026-10-22. Status: Accepted. User acceptance: 2026-10-22 ? "F01 looks good, lets move fo F02".
 
 ## Scope and acceptance
 

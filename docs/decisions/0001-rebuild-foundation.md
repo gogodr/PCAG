@@ -1,6 +1,6 @@
 # 0001 — Rebuild foundation boundaries and working defaults
 
-Date: 2026-10-22. Status: Proposed; awaiting F01 user validation. Supersedes historical implementation choices for the rebuild only. Governing scope: [development plan](../planning/06-development-plan.md), [roadmap](../planning/05-roadmap.md), and confirmed [character](../planning/07-character-and-interactions.md) / [player UI](../planning/08-player-actions-and-ui.md) requirements. Evidence: [fresh Escoria review](../research/04-escoria-f01-review.md).
+Date: 2026-10-22. Status: Accepted by the user on 2026-10-22; implementation experiments remain pending in their owning items. Supersedes historical implementation choices for the rebuild only. Governing scope: [development plan](../planning/06-development-plan.md), [roadmap](../planning/05-roadmap.md), and confirmed [character](../planning/07-character-and-interactions.md) / [player UI](../planning/08-player-actions-and-ui.md) requirements. Evidence: [fresh Escoria review](../research/04-escoria-f01-review.md).
 
 ## Context
 

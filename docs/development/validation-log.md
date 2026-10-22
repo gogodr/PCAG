@@ -1,13 +1,13 @@
 # Rebuild validation log
 
-Reset: 2026-10-22. F01 research and decisions await user validation; application implementation has not started. Full scope and acceptance criteria live in the [development plan](../planning/06-development-plan.md).
+Reset: 2026-10-22. F01 accepted on 2026-10-22. F02 workspace and toolchain work is in progress. Full scope and acceptance criteria live in the [development plan](../planning/06-development-plan.md).
 
 Statuses: Not started -> In progress -> Awaiting user validation -> Accepted. Use Blocked with a reason when needed. Only explicit user validation makes an item Accepted. Keep one item active; record evidence, user acceptance, and date in its row. Milestone integration results are recorded separately after the relevant items are accepted.
 
 | Item | Status | Evidence / review guide | User acceptance / date |
 | --- | --- | --- | --- |
-| F01 | Awaiting user validation | [Research, decisions, and review guide](f01-review.md) | Pending |
-| F02 | Not started | Pending | Pending |
+| F01 | Accepted | [Research, decisions, and review guide](f01-review.md) | 2026-10-22: "F01 looks good, lets move fo F02" |
+| F02 | In progress | [Scope and review guide](f02-review.md) | Pending |
 | F03 | Not started | Pending | Pending |
 | F04 | Not started | Pending | Pending |
 | F05 | Not started | Pending | Pending |
