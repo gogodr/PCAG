@@ -1,6 +1,6 @@
 # Development plan
 
-Date: 2026-10-21. Reset: 2026-10-22. Status: F01 **Accepted**; F02 **Awaiting user validation**; F03-U03 remain **Not started**. All 24 backlog items are retained. The first build and its evidence are historical; see [reset record](../development/rebuild-reset.md).
+Date: 2026-10-21. Reset: 2026-10-22. Status: F01/F02 **Accepted**; F03 **In progress**; F04-U03 remain **Not started**. All 24 backlog items are retained. The first build and its evidence are historical; see [reset record](../development/rebuild-reset.md).
 
 Use the [roadmap](05-roadmap.md) for release scope and milestone gates. The earlier [architecture proposal](03-framework-plan.md) and [creator proposal](04-browser-creator.md) explain the domain and UX. This document defines the execution backlog and engineering workflow.
 
@@ -48,7 +48,7 @@ These are proposed implementation constraints. Record material changes in a shor
 
 ## Ordered backlog
 
-Current status: **F01 Accepted** ([review guide](../development/f01-review.md)); **F02 Awaiting user validation** ([review guide](../development/f02-review.md)); **F03-U03 Not started**. No previous completion or acceptance carries into the rebuild. IDs, scope, dependencies, and acceptance evidence below are unchanged. Execute one item at a time in listed order; dependencies and milestone gates still apply.
+Current status: **F01 Accepted** ([review guide](../development/f01-review.md)); **F02 Accepted** ([review guide](../development/f02-review.md)); **F03 In progress** ([review guide](../development/f03-review.md)); **F04-U03 Not started**. No previous completion or acceptance carries into the rebuild. IDs, scope, dependencies, and acceptance evidence below are unchanged. Execute one item at a time in listed order; dependencies and milestone gates still apply.
 
 | ID | Milestone | Work package | Depends on | Acceptance evidence |
 | --- | --- | --- | --- | --- |
@@ -79,7 +79,7 @@ Current status: **F01 Accepted** ([review guide](../development/f01-review.md));
 
 ## Current development iteration
 
-F01 was accepted on 2026-10-22. Work on **F02 only**: workspace, creator/player build, type checks, minimal tests and CI, and documented setup. Present runnable results for user validation before starting F03. Do not introduce the project schema, adventure runtime, editor features, persistence, or export packaging during F02.
+F01 and F02 are accepted. Work on **F03 only**: minimal project schema, stable IDs, structural/reference diagnostics, and a maintained sample fixture. Demonstrate valid room loading and field-level invalid-reference diagnostics before F04. Shared gameplay, hotspot editing, persistence, and export remain later items.
 
 F02, F03, F04, and F05 follow separately, each with its own validation gate. Together they still deliver the full M0 creator-to-export proof. M0 is complete only after all five items are accepted and its integrated milestone gate passes.
 

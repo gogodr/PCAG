@@ -1,6 +1,6 @@
 # F02 review: workspace and toolchain
 
-Date: 2026-10-22. Status: Awaiting user validation. User acceptance: pending.
+Date: 2026-10-22. Status: Accepted. User acceptance: 2026-10-22 - "all good now, lets move into F03".
 
 ## Scope and acceptance
 

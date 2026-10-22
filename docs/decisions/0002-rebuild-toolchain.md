@@ -1,6 +1,6 @@
 # 0002 — F02 build and verification toolchain
 
-Date: 2026-10-22. Status: Implemented for F02; awaiting user validation.
+Date: 2026-10-22. Status: Accepted with F02 on 2026-10-22.
 
 ## Choice and evidence
 
