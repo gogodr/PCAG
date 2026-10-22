@@ -28,9 +28,9 @@ npm run dev:player
 ```
 
 - Creator: <http://127.0.0.1:5173/> — React welcome screen with an honest empty-workspace message.
-- Player: <http://127.0.0.1:5174/> — independent player shell; Phaser draws a decorative stage and reports readiness.
+- Player: <http://127.0.0.1:5174/> — game-only player view; Phaser draws a sample landscape in a full-width, centered 16:9 frame.
 
-No buttons promise unimplemented authoring or gameplay. The player stage is a renderer boot probe, not an adventure room. It loads no project data and has no gameplay.
+No buttons promise unimplemented authoring or gameplay. The player landscape is a renderer sample, not an interactive adventure room. It loads no project data and has no gameplay.
 
 Both servers bind to loopback only and fail if their ports are occupied. Stop the conflicting server or pass `-- --port 5180` when manually reviewing. Stop servers with Ctrl+C. No app needs the other server to run.
 
@@ -44,7 +44,7 @@ Both servers bind to loopback only and fail if their ports are occupied. Stop th
 | `npm run build` | Typecheck, then build both independent outputs |
 | `npm run preview:creator` | Serve creator production output on port 4173 |
 | `npm run preview:player` | Serve player production output on port 4174 |
-| `npm test` | Run four Chromium smoke checks against already-built outputs and concurrent dev servers; starts/stops test servers |
+| `npm test` | Run six Chromium checks against already-built outputs and concurrent dev servers; starts/stops test servers |
 | `npm run check` | Full F02 validation: typecheck, both builds, production-browser tests |
 
 The individual `build:*` commands transpile and bundle; they do not replace type checking. Use `build` or `check` for validation. Preview servers are local review tools, not production hosting services. HTTP is the review path, not opening `index.html` from disk.
@@ -60,3 +60,17 @@ There is one private npm project and one lockfile. `apps/creator` uses React; `a
 The GitHub Actions [workflow](../../.github/workflows/check.yml) runs on pushes and pull requests with read-only repository permissions. It installs the pinned Node version, runs `npm ci`, installs Chromium, and runs `npm run check`; failed runs upload browser evidence. Linux CI configuration is provided, but a successful hosted run must be observed separately from local Windows results.
 
 See the [toolchain decision](../decisions/0002-rebuild-toolchain.md) for verified versions and the [F02 review](f02-review.md) for actual execution results and limitations.
+
+## Embed the player
+
+Host the player build independently and use its URL as an iframe source. For local review:
+
+```html
+<iframe
+  src="http://127.0.0.1:5174/"
+  title="Adventure game"
+  style="display:block;width:100%;aspect-ratio:16/9;border:0"
+></iframe>
+```
+
+The game fills the available width at 16:9. In a taller frame it is centered vertically against a dark background. Give the iframe at least its 16:9 height to avoid vertical scrolling; the game intentionally preserves full width rather than shrinking to a shorter container. There is no surrounding branding, header, footer, or visible loading/status copy. Readiness remains available to assistive technology. The bundled SVG landscape is original project artwork created for this presentation sample and requires no external assets.

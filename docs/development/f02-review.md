@@ -24,8 +24,8 @@ F01 is accepted. F02 has a pinned toolchain, independent creator/player shells, 
 
 1. Follow [developer setup](setup.md). Run `npm run dev` and `npm run dev:player` in separate terminals.
 2. Open <http://127.0.0.1:5173/>: the creator welcome screen renders through React. Tab focuses the home link with a visible outline. The page states that there is no project to edit yet.
-3. Open <http://127.0.0.1:5174/>: the player shows a decorative Phaser stage and “Ready for a story. No adventure is loaded yet.” It works independently of the creator.
-4. Run `npm run check`: type checking and both builds pass, followed by four Chromium checks (two production, two development). Test servers use ports 4173/4174 and 5175/5176; manual review servers may stay running.
+3. Open <http://127.0.0.1:5174/>: the player shows only a moonlit landscape in a full-width, centered 16:9 game frame. It works independently of the creator and can be embedded in an iframe.
+4. Run `npm run check`: type checking and both builds pass, followed by six Chromium checks (boot and iframe-resize checks in production and development). Test servers use ports 4173/4174 and 5175/5176; manual review servers may stay running.
 5. Inspect the [toolchain decision](../decisions/0002-rebuild-toolchain.md) and [CI workflow](../../.github/workflows/check.yml). Accept F02 or request changes; F03 starts only after explicit acceptance.
 
 Screenshots from the production-browser run:
@@ -67,3 +67,9 @@ Review correction (2026-10-22): the user reported a blank creator page. Reproduc
 - M0 is incomplete; F03–F05 and the integrated milestone gate are still required.
 
 Commits: `e5cfd40` records F01 acceptance/F02 scope; `0c9f7ea` adds the verified workspace, shells, tests, and CI. The final review/evidence commit follows those milestones.
+
+## Player presentation revision (2026-10-22)
+
+At the user's request, replaced the branded player page with an embeddable game-only view. The canvas is 1600 x 900, scales to full container width at 16:9, and centers vertically in taller containers. Added an original SVG moonlit landscape as the sample game background and a dark surrounding background. Removed all visible page copy; assistive-technology readiness remains. This presentation revision does not introduce project schema or gameplay.
+
+Validation: `npm run check` passed both builds, strict type checks, and all six browser checks (21.2 seconds). The new iframe cases verify no header/footer/title, full-width canvas, 16:9 proportions, and vertical centering at 640px and 360px widths in a 520px-high embed. The initial run exposed Phaser's inability to decode Vite's inlined SVG URL; importing the background with `?no-inline` fixed both development and production loading. Visually inspected the updated production screenshot. See [setup](setup.md#embed-the-player) for iframe markup. The player screenshot below the review steps is updated to the new view.

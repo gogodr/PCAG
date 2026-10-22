@@ -8,16 +8,9 @@
     <title>PCAG Player</title>
   </head>
   <body>
-    <main>
-      <header><span class="wordmark">PCAG <span>Player</span></span><span class="badge">Early development</span></header>
-      <section aria-labelledby="player-title">
-        <p class="eyebrow">An adventure awaits</p>
-        <h1 id="player-title">The stage is ready.</h1>
-        <p class="intro">This is the beginning of the adventure player. A playable story will follow.</p>
-        <div id="stage" aria-hidden="true"></div>
-        <p id="status" role="status">Preparing the stage…</p>
-      </section>
-      <footer>PCAG / Player</footer>
+    <main aria-label="Adventure player">
+      <div id="stage" role="img" aria-label="Moonlit mountain landscape"></div>
+      <p id="status" class="sr-only" role="status">Loading game view...</p>
     </main>
     <noscript>Enable JavaScript to open PCAG Player.</noscript>
     <script type="module" src="./src/main.ts"></script>
