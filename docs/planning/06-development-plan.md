@@ -1,6 +1,6 @@
 # Development plan
 
-Date: 2026-10-21. Reset: 2026-10-22. Status: rebuild not started. All 24 backlog items are retained and reset to **Not started**. The first build and its evidence are historical; see [reset record](../development/rebuild-reset.md).
+Date: 2026-10-21. Reset: 2026-10-22. Status: F01 awaiting user validation; F02-U03 remain **Not started**. All 24 backlog items are retained. The first build and its evidence are historical; see [reset record](../development/rebuild-reset.md).
 
 Use the [roadmap](05-roadmap.md) for release scope and milestone gates. The earlier [architecture proposal](03-framework-plan.md) and [creator proposal](04-browser-creator.md) explain the domain and UX. This document defines the execution backlog and engineering workflow.
 
@@ -48,7 +48,7 @@ These are proposed implementation constraints. Record material changes in a shor
 
 ## Ordered backlog
 
-Current status: **F01?U03 Not started**. No previous completion or acceptance carries into the rebuild. IDs, scope, dependencies, and acceptance evidence below are unchanged. Execute one item at a time in listed order; dependencies and milestone gates still apply.
+Current status: **F01 Awaiting user validation** ([review guide](../development/f01-review.md)); **F02-U03 Not started**. No previous completion or acceptance carries into the rebuild. IDs, scope, dependencies, and acceptance evidence below are unchanged. Execute one item at a time in listed order; dependencies and milestone gates still apply.
 
 | ID | Milestone | Work package | Depends on | Acceptance evidence |
 | --- | --- | --- | --- | --- |

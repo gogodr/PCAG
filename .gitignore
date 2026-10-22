@@ -1,4 +1,5 @@
 node_modules/
+archive/first-build-*/
 dist/
 .npm-cache/
 .playwright/

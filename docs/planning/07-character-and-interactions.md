@@ -1,6 +1,6 @@
 # Playable character and interaction rules
 
-Date: 2026-10-22. Status: confirmed product direction, with implementation defaults identified below. M1 implements character movement, View speech, room traversal, and the approach/cancellation boundary. Physical pickup/use effects remain M2 work. See [M1 evidence](../development/m1-evidence.md).
+Date: 2026-10-22. Status: confirmed product direction, with implementation defaults identified below. Rebuild implementation has not started. M1 must deliver character movement, View speech, room traversal, and the approach/cancellation boundary. Physical pickup/use effects remain M2 scope. Previous implementation evidence is historical; see the [reset record](../development/rebuild-reset.md).
 
 ## Confirmed experience
 

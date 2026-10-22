@@ -1,8 +1,0 @@
-node_modules/
-dist/
-.npm-cache/
-.playwright/
-apps/creator/public/player-template/
-test-results/
-playwright-report/
-*.tsbuildinfo
