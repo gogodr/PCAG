@@ -1,6 +1,6 @@
 # Development skills and handoff
 
-Date: 2026-10-21. Reset: 2026-10-22. Status: retained capability guidance for the rebuild. Earlier M0/M1 implementation and evidence are archived; no item is accepted in the rebuild.
+Date: 2026-10-21. Reset: 2026-10-22. Status: retained capability guidance for the rebuild. Earlier M0/M1 implementation and evidence are archived; F01 is accepted and F02 awaits user validation.
 
 PCAG needs eight complementary capabilities. These are responsibilities, not eight required hires or separate agents. One developer can cover several. Each linked `SKILL.md` is a reusable instruction file for a developer or coding agent, with scope, constraints, workflow, and acceptance evidence.
 
@@ -57,7 +57,7 @@ These are decision topics, not pre-existing APIs. Agree on the smallest contract
 
 ## Ready-to-use next assignment
 
-> Execute F01 only from `docs/planning/06-development-plan.md`: focused Escoria review, project/runtime boundaries, and working UX defaults. Read the foundation guidance and confirmed gameplay/UI requirements. Use archived findings only as historical inputs. Produce reviewable decision notes, references, open questions, and a validation guide. Set F01 to Awaiting user validation when ready; wait for explicit acceptance before F02. Do not scaffold or implement later items.
+> F01 was accepted on 2026-10-22. Execute F02 only: workspace, independent creator/player build, strict type checks, minimal browser tests and CI. Follow the foundation guidance and accepted decisions. Present documented setup and fresh results for user validation before F03; do not implement the schema or runtime early.
 
 For later assignments, identify backlog IDs, the intended creator outcome, relevant skill paths, existing decisions, and acceptance scenarios. Hand back changed artifacts, executed checks/results, untested limits, and next dependencies. Update milestone status only with evidence. No dates or staffing estimates are implied by this pack.
 
