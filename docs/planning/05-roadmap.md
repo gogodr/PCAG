@@ -1,6 +1,6 @@
 # Product roadmap
 
-Date: 2026-10-21. Reset: 2026-10-22. Status: M0 in progress; F01 accepted and F02 awaiting user validation. Full milestone and release scope retained; every backlog item requires individual validation before the next begins.
+Date: 2026-10-21. Reset: 2026-10-22. Status: M0 in progress; F01/F02 accepted and F03 in progress. Full milestone and release scope retained; every backlog item requires individual validation before the next begins.
 
 ## Release objective
 
@@ -98,4 +98,4 @@ Use milestone gates rather than calendar promises until M0 establishes the stack
 
 After M0, estimate backlog items using observed completion time and publish a rolling forecast for the next milestone. Re-estimate at each gate; track runtime, creator, validation, and documentation work together. Larger milestones may span several iterations.
 
-Progress **2026-10-22**: **M0 in progress**, F01 accepted and F02 awaiting user validation; later milestones remain Not started. The first implementation is historical input available in Git at `fdc0bda`, not current acceptance evidence. All 24 backlog items remain in the [development plan](06-development-plan.md). Implement, verify, and obtain user validation for each item before advancing. Track results in the [validation log](../development/validation-log.md).
+Progress **2026-10-22**: **M0 in progress**, F01/F02 accepted and F03 in progress; later milestones remain Not started. The first implementation is historical input available in Git at `fdc0bda`, not current acceptance evidence. All 24 backlog items remain in the [development plan](06-development-plan.md). Implement, verify, and obtain user validation for each item before advancing. Track results in the [validation log](../development/validation-log.md).

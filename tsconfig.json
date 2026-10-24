@@ -13,9 +13,10 @@
     "noFallthroughCasesInSwitch": true,
     "isolatedModules": true,
     "verbatimModuleSyntax": true,
+    "allowImportingTsExtensions": true,
     "skipLibCheck": true,
     "noEmit": true,
     "types": ["node", "vite/client"]
   },
-  "include": ["apps", "tests", "*.config.ts"]
+  "include": ["apps", "packages", "examples", "tests", "scripts", "*.config.ts"]
 }

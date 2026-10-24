@@ -1,0 +1,41 @@
+.toast-stack {
+  position: fixed;
+  right: 22px;
+  bottom: 22px;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  width: min(390px, calc(100vw - 32px));
+  max-height: calc(100vh - 44px);
+  overflow-y: auto;
+  pointer-events: none;
+}
+
+.toast {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 13px 12px 13px 15px;
+  border: 1px solid #729987;
+  border-left: 4px solid #9ac8a7;
+  border-radius: 9px;
+  background: #20382f;
+  box-shadow: 0 10px 30px #0008;
+  color: #f0f5ed;
+  line-height: 1.4;
+  pointer-events: auto;
+  animation: toast-in 220ms ease-out both;
+}
+
+.toast.toast-error { border-color: #bd8278; border-left-color: #e49b8d; background: #3b2928; }
+.toast.toast-exit { animation: toast-out 220ms ease-in both; pointer-events: none; }
+.toast-copy { min-width: 0; flex: 1; overflow-wrap: anywhere; }
+.toast-copy small { display: block; margin-top: 5px; color: #c6d7cb; font-size: 12px; }
+.toast-dismiss { flex: none; width: 28px; height: 28px; padding: 0 !important; border: 0 !important; background: transparent !important; color: #e9f1e8 !important; font-size: 22px; line-height: 1; }
+.toast-dismiss:hover { background: #ffffff20 !important; }
+@media (max-width: 650px) { .toast-stack { right: 16px; bottom: 16px; } }
+@keyframes toast-in { from { opacity: 0; transform: translateX(18px) scale(.97); } to { opacity: 1; transform: translateX(0) scale(1); } }
+@keyframes toast-out { from { opacity: 1; transform: translateX(0) scale(1); } to { opacity: 0; transform: translateX(18px) scale(.97); } }
+@media (prefers-reduced-motion: reduce) { .toast, .toast.toast-exit { animation: none; } }

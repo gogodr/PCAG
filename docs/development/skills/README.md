@@ -1,6 +1,6 @@
 # Development skills and handoff
 
-Date: 2026-10-21. Reset: 2026-10-22. Status: retained capability guidance for the rebuild. Earlier M0/M1 implementation and evidence are archived; F01 is accepted and F02 awaits user validation.
+Date: 2026-10-21. Reset: 2026-10-22. Status: retained capability guidance for the rebuild. Earlier M0/M1 implementation and evidence are archived; F01/F02 are accepted and F03 is in progress.
 
 PCAG needs eight complementary capabilities. These are responsibilities, not eight required hires or separate agents. One developer can cover several. Each linked `SKILL.md` is a reusable instruction file for a developer or coding agent, with scope, constraints, workflow, and acceptance evidence.
 
@@ -57,7 +57,7 @@ These are decision topics, not pre-existing APIs. Agree on the smallest contract
 
 ## Ready-to-use next assignment
 
-> F01 was accepted on 2026-10-22. Execute F02 only: workspace, independent creator/player build, strict type checks, minimal browser tests and CI. Follow the foundation guidance and accepted decisions. Present documented setup and fresh results for user validation before F03; do not implement the schema or runtime early.
+> F01/F02 are accepted. Execute F03 only: minimal authored project schema, stable IDs, diagnostics, and maintained valid/invalid fixtures. Use pcag-project-format guidance. Verify valid room loading, field-level errors, rename/reorder identity, and serialization. Present results and wait for acceptance before F04; do not introduce editor mutations, shared gameplay, storage, or export early.
 
 For later assignments, identify backlog IDs, the intended creator outcome, relevant skill paths, existing decisions, and acceptance scenarios. Hand back changed artifacts, executed checks/results, untested limits, and next dependencies. Update milestone status only with evidence. No dates or staffing estimates are implied by this pack.
 

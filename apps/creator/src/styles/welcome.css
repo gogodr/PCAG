@@ -1,0 +1,23 @@
+.welcome-page { min-height: 100vh; padding: clamp(24px, 5vw, 72px); background: radial-gradient(circle at 80% 8%, #274b3e 0, transparent 35%), #101b19; }
+.welcome-brand { max-width: 1120px; margin: 0 auto; color: #f1d293; font-size: 19px; font-weight: 850; letter-spacing: .04em; }
+.welcome-brand span { margin-left: 5px; color: #f3f5ed; font-weight: 400; }
+.welcome-intro, .welcome-step { max-width: 1120px; margin: clamp(64px, 11vh, 140px) auto 0; }
+.welcome-intro > h1 { max-width: 760px; margin: 18px 0; font-size: clamp(44px, 6vw, 76px); line-height: 1.05; letter-spacing: -.04em; }
+.welcome-intro > p:not(.eyebrow) { max-width: 680px; color: #bbd0c0; font-size: 18px; line-height: 1.6; }
+.welcome-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin-top: 55px; }
+.welcome-page .welcome-actions button { display: flex; min-height: 180px; flex-direction: column; align-items: flex-start; justify-content: space-between; padding: 25px !important; border-color: #466455 !important; border-radius: 14px !important; background: #1b3029 !important; color: #f3f5ed !important; text-align: left; }
+.welcome-page .welcome-actions button:hover { border-color: #f1d293 !important; background: #264437 !important; }
+.welcome-actions strong { font-size: 21px; line-height: 1.25; }
+.welcome-actions span { color: #b8cdbd; font-size: 14px; line-height: 1.5; }
+.welcome-step { max-width: 640px; margin-top: clamp(60px, 10vh, 120px); }
+.welcome-step h1 { margin: 32px 0 12px; font-size: clamp(34px, 5vw, 52px); line-height: 1.1; }
+.welcome-step > p { color: #bbd0c0; line-height: 1.55; }
+.welcome-step label { margin-top: 32px; }
+.folder-choice { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 20px; margin: 28px 0; border: 1px dashed #668371; border-radius: 10px; background: #1a2d26; }
+.folder-choice span { overflow-wrap: anywhere; }
+.welcome-page .welcome-submit { min-width: 190px; }
+.welcome-page .welcome-back, .welcome-page .welcome-return { border: 0 !important; background: transparent !important; color: #f1d293 !important; padding-left: 0 !important; }
+.welcome-return { display: block; max-width: 1120px; margin: 42px auto 0; }
+.welcome-page [role="alert"] { max-width: 640px; margin: 24px auto; }
+@media (max-width: 800px) { .welcome-actions { grid-template-columns: 1fr; } .welcome-page .welcome-actions button { min-height: 120px; } }
+@media (max-width: 560px) { .folder-choice { align-items: stretch; flex-direction: column; } }

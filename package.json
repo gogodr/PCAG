@@ -2,19 +2,30 @@
   "name": "pcag",
   "version": "0.0.0",
   "private": true,
+  "main": "apps/creator/electron/main.cjs",
   "type": "module",
-  "engines": { "node": ">=22.12.0 <23", "npm": ">=10 <11" },
+  "engines": {
+    "node": ">=22.12.0 <23",
+    "npm": ">=10 <11"
+  },
   "packageManager": "npm@10.9.8",
   "scripts": {
-    "dev": "vite --config vite.creator.config.ts",
+    "dev": "node scripts/dev-creator.mjs",
+    "dev:creator:web": "npm run build:player && npm run stage:player && vite --config vite.creator.config.ts",
+    "start:creator": "npm run build && electron .",
     "dev:player": "vite --config vite.player.config.ts",
     "typecheck": "tsc --noEmit",
     "build:creator": "vite build --config vite.creator.config.ts",
     "build:player": "vite build --config vite.player.config.ts",
-    "build": "npm run typecheck && npm run build:creator && npm run build:player",
+    "stage:player": "node scripts/stage-player-template.mjs",
+    "build": "npm run typecheck && npm run build:player && npm run stage:player && npm run build:creator",
     "preview:creator": "vite preview --config vite.creator.config.ts",
     "preview:player": "vite preview --config vite.player.config.ts",
-    "test": "playwright test",
+    "test:format": "node --experimental-strip-types --test tests/integration/project-format.test.ts",
+    "review:format": "node --experimental-strip-types scripts/validate-project.ts",
+    "test:browser": "playwright test",
+    "test:desktop": "node tests/desktop/creator.mjs",
+    "test": "npm run test:format && npm run test:browser",
     "check": "npm run build && npm test"
   },
   "dependencies": {
@@ -28,6 +39,7 @@
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
     "@vitejs/plugin-react": "6.1.2",
+    "electron": "45.0.0",
     "typescript": "7.0.2",
     "vite": "8.3.5"
   }

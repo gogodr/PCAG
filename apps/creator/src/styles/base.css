@@ -1,0 +1,7 @@
+:root { font-family: "Segoe UI", system-ui, sans-serif; color: #e9f1e8; background: #101b19; font-synthesis: none; }
+* { box-sizing: border-box; }
+body { margin: 0; }
+button, input, select, textarea { font: inherit; }
+button { cursor: pointer; }
+button:disabled { cursor: not-allowed; opacity: .48; }
+button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, a:focus-visible { outline: 3px solid #eac478; outline-offset: 2px; }

@@ -1,6 +1,8 @@
 # Development plan
 
-Date: 2026-10-21. Reset: 2026-10-22. Status: F01/F02 **Accepted**; F03 **In progress**; F04-U03 remain **Not started**. All 24 backlog items are retained. The first build and its evidence are historical; see [reset record](../development/rebuild-reset.md).
+2026-10-23 foundation update: the creator now runs as an Electron desktop app with Node-backed project folder operations through an isolated preload bridge. The standalone player remains browser based. See [decision 0003](../decisions/0003-electron-creator.md). This change awaits user validation before feature work resumes; the F01-U03 backlog order is unchanged.
+
+Date: 2026-10-21. Reset: 2026-10-22. Status: F01-F05 **Accepted**; F06 **Awaiting user validation** before M1; R01-U03 remain **Not started**. The original 24 backlog items are retained and F06 is added by the 2026-10-23 editor interface request. The first build and its evidence are historical; see [reset record](../development/rebuild-reset.md).
 
 Use the [roadmap](05-roadmap.md) for release scope and milestone gates. The earlier [architecture proposal](03-framework-plan.md) and [creator proposal](04-browser-creator.md) explain the domain and UX. This document defines the execution backlog and engineering workflow.
 
@@ -48,7 +50,7 @@ These are proposed implementation constraints. Record material changes in a shor
 
 ## Ordered backlog
 
-Current status: **F01 Accepted** ([review guide](../development/f01-review.md)); **F02 Accepted** ([review guide](../development/f02-review.md)); **F03 In progress** ([review guide](../development/f03-review.md)); **F04-U03 Not started**. No previous completion or acceptance carries into the rebuild. IDs, scope, dependencies, and acceptance evidence below are unchanged. Execute one item at a time in listed order; dependencies and milestone gates still apply.
+Current status: **F01-F05 Accepted** ([F05 review guide](../development/f05-review.md)); **F06 Awaiting user validation** ([review guide](../development/f06-review.md)); **R01-U03 Not started**. F06 is a new pre-M1 item; the original backlog IDs remain. Execute one item at a time in listed order; dependencies and milestone gates still apply.
 
 | ID | Milestone | Work package | Depends on | Acceptance evidence |
 | --- | --- | --- | --- | --- |
@@ -57,7 +59,8 @@ Current status: **F01 Accepted** ([review guide](../development/f01-review.md));
 | F03 | M0 | Minimal schema, stable IDs, diagnostics, sample fixture | F01, F02 | Valid room loads; invalid references identify the affected field |
 | F04 | M0 | Shared renderer/runtime plus hotspot inspector | F03 | Edit background/hotspot/text, preview, restart without leaked state |
 | F05 | M0 | Minimal project storage and playable export spike | F04 | Save/reopen; exported sample runs over HTTP independently of editor |
-| R01 | M1 | Room/asset library and undoable editing operations | F05 | New/import/rename/delete/undo/reopen behave consistently |
+| F06 | Pre-M1 | Editor navigation and project/assets/scenes views | F05 | Empty startup offers new/open; local project folder contains live settings and asset files; compressed `.pcag` is an optional sharing export; scene selection and background assignment; other views visibly disabled |
+| R01 | M1 | Room/asset library and undoable editing operations | F06 | New/import/rename/delete/undo/reopen behave consistently |
 | R02 | M1 | Spatial editing and character animation mapping | R01 | Draw hotspot/walkable area, place visible actor with feet anchor, map animations, and set separate approach markers |
 | R03 | M1 | Click-to-walk, approach, character observations, cancellation | R02 | Visible actor routes around an obstacle; View speaks without approach; unreachable/canceled approaches execute no pending effect |
 | R04 | M1 | Exits, entry points and room lifecycle | R03 | Two visually authored rooms connect and return correctly |
@@ -79,7 +82,7 @@ Current status: **F01 Accepted** ([review guide](../development/f01-review.md));
 
 ## Current development iteration
 
-F01 and F02 are accepted. Work on **F03 only**: minimal project schema, stable IDs, structural/reference diagnostics, and a maintained sample fixture. Demonstrate valid room loading and field-level invalid-reference diagnostics before F04. Shared gameplay, hotspot editing, persistence, and export remain later items.
+F01-F05 are accepted and the integrated M0 gate passed on 2026-10-23. **F06 awaits user validation** before R01: navigation views, project settings, a structured asset tree, and scene selection/background assignment. Characters, Items, and Game Map are disabled placeholders. R01 and later items remain not started.
 
 F02, F03, F04, and F05 follow separately, each with its own validation gate. Together they still deliver the full M0 creator-to-export proof. M0 is complete only after all five items are accepted and its integrated milestone gate passes.
 

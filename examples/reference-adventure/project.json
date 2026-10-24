@@ -1,0 +1,92 @@
+{
+  "schemaVersion": 1,
+  "id": "project_moonlit",
+  "name": "New name",
+  "startRoomId": "room_lake",
+  "assets": [
+    {
+      "id": "asset_79c70ba9daaf59084198aa3180236fecc28f2be5",
+      "name": "bg.png",
+      "kind": "image",
+      "path": "backgrounds/scene_1/bg.png"
+    },
+    {
+      "id": "asset_156241ddaed5407653faf3f421cea502a3d25bcd",
+      "name": "bg.png",
+      "kind": "image",
+      "path": "backgrounds/scene_2/bg.png"
+    },
+    {
+      "id": "asset_57aabd9fce2d7ba19fdc2a48501a4d85f13e3b57",
+      "name": "m_door_1.png",
+      "kind": "image",
+      "path": "images/scene_1/m_door_1.png"
+    },
+    {
+      "id": "asset_185813ee35a55bd1b9bc27c1c4693a145b1201f5",
+      "name": "m_door_2.png",
+      "kind": "image",
+      "path": "images/scene_1/m_door_2.png"
+    },
+    {
+      "id": "asset_c2d0ae6c3de180ede5d5b16048f37dad02e01c02",
+      "name": "m_door_3.png",
+      "kind": "image",
+      "path": "images/scene_1/m_door_3.png"
+    },
+    {
+      "id": "asset_c99d57d4edd02389b1503e669f2c8b5dcfc7c833",
+      "name": "m_door_4.png",
+      "kind": "image",
+      "path": "images/scene_1/m_door_4.png"
+    },
+    {
+      "id": "asset_1b811755c41f25dd82914873fc340d4e7eaae9e3",
+      "name": "s_door_1.png",
+      "kind": "image",
+      "path": "images/scene_1/s_door_1.png"
+    },
+    {
+      "id": "asset_f424b1dc4ec7d562b3e35b5baadafe8fa679eb63",
+      "name": "s_door_2.png",
+      "kind": "image",
+      "path": "images/scene_1/s_door_2.png"
+    },
+    {
+      "id": "asset_73eb9a8d88d7a5ecca50662888a11d57a5f17ed3",
+      "name": "s_door_3.png",
+      "kind": "image",
+      "path": "images/scene_1/s_door_3.png"
+    },
+    {
+      "id": "asset_d82cc56426fc604646dc49aa0391f082a5565432",
+      "name": "s_door_4.png",
+      "kind": "image",
+      "path": "images/scene_1/s_door_4.png"
+    },
+    {
+      "id": "asset_97b50068a6c313bc89969b70d8e59d8dc6fd6789",
+      "name": "s_door_5.png",
+      "kind": "image",
+      "path": "images/scene_1/s_door_5.png"
+    }
+  ],
+  "rooms": [
+    {
+      "id": "room_lake",
+      "name": "Test 1",
+      "width": 1600,
+      "height": 900,
+      "hotspots": [],
+      "backgroundAssetId": "asset_156241ddaed5407653faf3f421cea502a3d25bcd"
+    },
+    {
+      "id": "id_93418d63-3f85-4bf2-b2e3-921cebfff7eb",
+      "name": "Test 2",
+      "width": 1600,
+      "height": 900,
+      "hotspots": [],
+      "backgroundAssetId": "asset_156241ddaed5407653faf3f421cea502a3d25bcd"
+    }
+  ]
+}

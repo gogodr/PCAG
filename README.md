@@ -1,8 +1,8 @@
 # PCAG - Point-and-click adventure framework
 
-PCAG is being rebuilt one validated backlog item at a time. **F01 is accepted; F02 workspace and toolchain results await review.** The full 24-item scope is retained.
+PCAG is being rebuilt one validated backlog item at a time. **F01-F05 and the M0 gate are accepted; F06 editor navigation awaits validation before M1.** The original 24-item scope is retained, with F06 added by the editor interface request.
 
-The release objective is a browser tool in which a nontechnical person can author, test, save, reopen, and export a complete small adventure without programming or developer intervention.
+The release objective is a desktop creator in which a nontechnical person can author, test, save, reopen, and export a complete small adventure without programming or developer intervention. The exported player runs in a browser.
 
 ## Run the development shells
 
@@ -15,10 +15,17 @@ npm run check
 npm run dev
 ```
 
-Open the creator at <http://127.0.0.1:5173/>. In a separate terminal, `npm run dev:player` opens the player shell at <http://127.0.0.1:5174/>. These are foundation shells; room authoring, project loading, and gameplay have not been implemented.
+`npm run dev` opens the creator in Electron. It opens the recent local project when available; otherwise its landing page offers **Create a new project**, **Import a PCAG project file**, and **Continue a local project**. Choose a project folder through the system folder dialog. New and imported projects require an empty folder; continuing requires a folder with `workspace.json`. The working folder contains real asset files in `backgrounds`, `images`, `sounds`, and `music`, and edits are written there automatically. A `.pcag` export is a compressed sharing copy. In a separate terminal, `npm run dev:player` opens the sample player at <http://127.0.0.1:5174/>. The creator also exports a standalone player ZIP. Characters, Items, and Game Map are disabled placeholders.
+
+## Source layout
+
+- `apps/creator/src/main.tsx` mounts the editor. `app/` coordinates workspace state, `views/` contains each editor screen, `features/` contains asset and scene controls, `components/` contains shared UI, `data/browserProjectStore.ts` handles folder access and recent-folder storage, and `styles/` contains the CSS.
+- `apps/player/src/main.ts` boots the player. `data/` loads project content and `app/` mounts the shared runtime.
+- `packages/` contains project validation, workspace data, file/export I/O, and the runtime shared by creator and player.
 
 - [Developer setup and commands](docs/development/setup.md)
-- [F02 results and review guide](docs/development/f02-review.md)
+- [F06 results and review guide](docs/development/f06-review.md)
+- [Project format contract](docs/development/project-format.md)
 - [Accepted foundation decisions](docs/decisions/0001-rebuild-foundation.md)
 - [Development plan and unchanged backlog](docs/planning/06-development-plan.md)
 - [Validation log](docs/development/validation-log.md)
