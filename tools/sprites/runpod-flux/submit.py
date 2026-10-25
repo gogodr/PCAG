@@ -7,6 +7,7 @@ import json
 import os
 from pathlib import Path
 import time
+from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
 from PIL import Image, ImageFilter
@@ -92,8 +93,11 @@ def stitched_input(reference: Path, frame: int) -> bytes:
 def api(url: str, key: str, body: dict | None = None) -> dict:
     data = None if body is None else json.dumps(body).encode("utf-8")
     request = Request(url, data=data, headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"})
-    with urlopen(request, timeout=90) as response:
-        return json.load(response)
+    try:
+        with urlopen(request, timeout=90) as response:
+            return json.load(response)
+    except HTTPError as error:
+        raise RuntimeError(f"Runpod HTTP {error.code}: {error.read(1000).decode('utf-8', errors='replace')}") from error
 
 
 def main() -> None:
