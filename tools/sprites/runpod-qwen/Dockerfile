@@ -1,14 +1,14 @@
-FROM runpod/worker-comfyui:5.11.0-base
+FROM runpod/worker-comfyui:5.10.0-base-cuda12.8.1
 
 # The Runpod base image supplies the serverless handler and ComfyUI. This layer
 # adds the only custom node required by the exported Qwen Edit workflow.
-RUN curl -fL -o /tmp/nunchaku.whl https://github.com/nunchux-ai/nunchaku/releases/download/v1.2.1/nunchaku-1.2.1%2Bcu12.8torch2.11-cp312-cp312-linux_x86_64.whl \
-    && mv /tmp/nunchaku.whl /tmp/nunchaku-1.2.1+cu12.8torch2.11-cp312-cp312-linux_x86_64.whl \
-    && uv pip install --python /opt/venv/bin/python --no-deps /tmp/nunchaku-1.2.1+cu12.8torch2.11-cp312-cp312-linux_x86_64.whl \
-    && rm /tmp/nunchaku-1.2.1+cu12.8torch2.11-cp312-cp312-linux_x86_64.whl
+RUN curl -fL -o /tmp/nunchaku.whl https://github.com/nunchux-ai/nunchaku/releases/download/v1.2.1/nunchaku-1.2.1%2Bcu12.8torch2.10-cp312-cp312-linux_x86_64.whl \
+    && mv /tmp/nunchaku.whl /tmp/nunchaku-1.2.1+cu12.8torch2.10-cp312-cp312-linux_x86_64.whl \
+    && uv pip install --python /opt/venv/bin/python --no-deps /tmp/nunchaku-1.2.1+cu12.8torch2.10-cp312-cp312-linux_x86_64.whl \
+    && rm /tmp/nunchaku-1.2.1+cu12.8torch2.10-cp312-cp312-linux_x86_64.whl
 RUN comfy-node-install ComfyUI-nunchaku
 
-# The backend wheel matches the 5.11.0 base image's Python 3.12, PyTorch 2.11,
+# The backend wheel matches the 5.10.0 base image's Python 3.12, PyTorch 2.10,
 # and CUDA 12.8. Catch an upstream base-image change at build time.
 RUN python -c "import torch,sys; print('Python',sys.version,'PyTorch',torch.__version__,'CUDA',torch.version.cuda)" \
     && python -c "import nunchaku"
