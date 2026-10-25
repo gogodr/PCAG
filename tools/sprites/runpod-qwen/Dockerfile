@@ -2,8 +2,8 @@ FROM runpod/worker-comfyui:5.10.0-base-cuda12.8.1
 
 # The Runpod base image supplies the serverless handler and ComfyUI. This layer
 # adds the only custom node required by the exported Qwen Edit workflow.
-RUN curl -fL -o /tmp/nunchaku.whl https://github.com/nunchux-ai/nunchaku/releases/download/v1.2.1/nunchaku-1.2.1%2Bcu12.8torch2.10-cp312-cp312-linux_x86_64.whl \
-    && mv /tmp/nunchaku.whl /tmp/nunchaku-1.2.1+cu12.8torch2.10-cp312-cp312-linux_x86_64.whl \
+RUN /opt/venv/bin/python -c "import urllib.request; urllib.request.urlretrieve('https://github.com/nunchux-ai/nunchaku/releases/download/v1.2.1/nunchaku-1.2.1%2Bcu12.8torch2.10-cp312-cp312-linux_x86_64.whl', '/tmp/nunchaku-1.2.1+cu12.8torch2.10-cp312-cp312-linux_x86_64.whl')" \
+    && /opt/venv/bin/python -c "from pathlib import Path; p=Path('/tmp/nunchaku-1.2.1+cu12.8torch2.10-cp312-cp312-linux_x86_64.whl'); assert p.stat().st_size > 100_000_000" \
     && uv pip install --python /opt/venv/bin/python --no-deps /tmp/nunchaku-1.2.1+cu12.8torch2.10-cp312-cp312-linux_x86_64.whl \
     && rm /tmp/nunchaku-1.2.1+cu12.8torch2.10-cp312-cp312-linux_x86_64.whl
 RUN comfy-node-install ComfyUI-nunchaku
