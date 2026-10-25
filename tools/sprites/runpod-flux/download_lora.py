@@ -2,7 +2,8 @@
 
 import os
 from pathlib import Path
-from urllib.request import Request, urlopen
+
+import requests
 
 
 URL = "https://civitai.com/api/download/models/2144028?fileId=2037775"
@@ -18,11 +19,13 @@ def main() -> None:
         raise RuntimeError("CIVITAI_API_KEY is required for the RefControl pose LoRA")
     DESTINATION.parent.mkdir(parents=True, exist_ok=True)
     temporary = DESTINATION.with_suffix(".download")
-    request = Request(URL, headers={"Authorization": f"Bearer {key}"})
     try:
-        with urlopen(request, timeout=120) as response, temporary.open("wb") as output:
-            while chunk := response.read(1024 * 1024):
-                output.write(chunk)
+        with requests.get(URL, headers={"Authorization": f"Bearer {key}"}, stream=True, timeout=120) as response:
+            response.raise_for_status()
+            with temporary.open("wb") as output:
+                for chunk in response.iter_content(chunk_size=1024 * 1024):
+                    if chunk:
+                        output.write(chunk)
         if temporary.stat().st_size < MIN_BYTES:
             raise RuntimeError("RefControl pose LoRA download was incomplete")
         temporary.replace(DESTINATION)
