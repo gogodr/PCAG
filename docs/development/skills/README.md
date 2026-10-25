@@ -31,6 +31,8 @@ These files live in the repository so the entire handoff travels with the projec
 
 Ownership overlaps intentionally: a backlog item is complete only when its integrated creator outcome works. Do not mark D01 complete after writing only its dialogue interpreter, for example.
 
+For the optional sprite-generation tooling, use [stable-diffusion-prompting](stable-diffusion-prompting/SKILL.md) to review saved ComfyUI parameters, draft prompts from character references, and compare controlled pose-conditioned trials. It does not change the core backlog sequence.
+
 ## Development order
 
 The groups below describe milestone scope, not batch assignments. Work on one backlog ID at a time and wait for explicit user validation before advancing, following the development plan.

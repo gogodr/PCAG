@@ -1,0 +1,113 @@
+{
+  "animation": "walk_right",
+  "image": "atlas.png",
+  "preview": "animation.gif",
+  "overlayImage": "overlay_atlas.png",
+  "overlayPreview": "overlay.gif",
+  "source": "source_frames",
+  "frameWidth": 90,
+  "frameHeight": 160,
+  "frameCount": 8,
+  "fps": 8,
+  "loop": true,
+  "characterReference": "../../../tools/sprites/references/animation-dummy-turnaround.png",
+  "poseReference": "../../character-animations-openpose/walk_right",
+  "frames": [
+    {
+      "index": 0,
+      "file": "frame_00.png",
+      "overlay": "overlay_00.png",
+      "source": "source_frames/frame_00.png",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 90,
+        "height": 160
+      }
+    },
+    {
+      "index": 1,
+      "file": "frame_01.png",
+      "overlay": "overlay_01.png",
+      "source": "source_frames/frame_01.png",
+      "rect": {
+        "x": 90,
+        "y": 0,
+        "width": 90,
+        "height": 160
+      }
+    },
+    {
+      "index": 2,
+      "file": "frame_02.png",
+      "overlay": "overlay_02.png",
+      "source": "source_frames/frame_02.png",
+      "rect": {
+        "x": 180,
+        "y": 0,
+        "width": 90,
+        "height": 160
+      }
+    },
+    {
+      "index": 3,
+      "file": "frame_03.png",
+      "overlay": "overlay_03.png",
+      "source": "source_frames/frame_03.png",
+      "rect": {
+        "x": 270,
+        "y": 0,
+        "width": 90,
+        "height": 160
+      }
+    },
+    {
+      "index": 4,
+      "file": "frame_04.png",
+      "overlay": "overlay_04.png",
+      "source": "source_frames/frame_04.png",
+      "rect": {
+        "x": 360,
+        "y": 0,
+        "width": 90,
+        "height": 160
+      }
+    },
+    {
+      "index": 5,
+      "file": "frame_05.png",
+      "overlay": "overlay_05.png",
+      "source": "source_frames/frame_05.png",
+      "rect": {
+        "x": 450,
+        "y": 0,
+        "width": 90,
+        "height": 160
+      }
+    },
+    {
+      "index": 6,
+      "file": "frame_06.png",
+      "overlay": "overlay_06.png",
+      "source": "source_frames/frame_06.png",
+      "rect": {
+        "x": 540,
+        "y": 0,
+        "width": 90,
+        "height": 160
+      }
+    },
+    {
+      "index": 7,
+      "file": "frame_07.png",
+      "overlay": "overlay_07.png",
+      "source": "source_frames/frame_07.png",
+      "rect": {
+        "x": 630,
+        "y": 0,
+        "width": 90,
+        "height": 160
+      }
+    }
+  ]
+}

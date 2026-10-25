@@ -7,3 +7,7 @@ apps/creator/public/player-template/
 test-results/
 playwright-report/
 *.tsbuildinfo
+.env
+.env.*
+!.env.example
+tools/sprites/.local/

@@ -1,0 +1,963 @@
+{
+  "animation": "being_hit_right",
+  "image": "atlas.png",
+  "controlnetImage": "controlnet_atlas.png",
+  "editorBlackImage": "editor_black_atlas.png",
+  "preview": "animation.gif",
+  "format": "COCO-18",
+  "keypointNames": [
+    "nose",
+    "neck",
+    "right_shoulder",
+    "right_elbow",
+    "right_wrist",
+    "left_shoulder",
+    "left_elbow",
+    "left_wrist",
+    "right_hip",
+    "right_knee",
+    "right_ankle",
+    "left_hip",
+    "left_knee",
+    "left_ankle",
+    "right_eye",
+    "left_eye",
+    "right_ear",
+    "left_ear"
+  ],
+  "connections": [
+    [
+      0,
+      1
+    ],
+    [
+      1,
+      2
+    ],
+    [
+      2,
+      3
+    ],
+    [
+      3,
+      4
+    ],
+    [
+      1,
+      5
+    ],
+    [
+      5,
+      6
+    ],
+    [
+      6,
+      7
+    ],
+    [
+      1,
+      8
+    ],
+    [
+      8,
+      9
+    ],
+    [
+      9,
+      10
+    ],
+    [
+      1,
+      11
+    ],
+    [
+      11,
+      12
+    ],
+    [
+      12,
+      13
+    ],
+    [
+      0,
+      14
+    ],
+    [
+      14,
+      16
+    ],
+    [
+      0,
+      15
+    ],
+    [
+      15,
+      17
+    ]
+  ],
+  "controlnetConnections": [
+    [
+      1,
+      2
+    ],
+    [
+      1,
+      5
+    ],
+    [
+      2,
+      3
+    ],
+    [
+      3,
+      4
+    ],
+    [
+      5,
+      6
+    ],
+    [
+      6,
+      7
+    ],
+    [
+      1,
+      8
+    ],
+    [
+      8,
+      9
+    ],
+    [
+      9,
+      10
+    ],
+    [
+      1,
+      11
+    ],
+    [
+      11,
+      12
+    ],
+    [
+      12,
+      13
+    ],
+    [
+      1,
+      0
+    ],
+    [
+      0,
+      14
+    ],
+    [
+      14,
+      16
+    ],
+    [
+      0,
+      15
+    ],
+    [
+      15,
+      17
+    ]
+  ],
+  "controlnetColors": [
+    [
+      255,
+      0,
+      0
+    ],
+    [
+      255,
+      85,
+      0
+    ],
+    [
+      255,
+      170,
+      0
+    ],
+    [
+      255,
+      255,
+      0
+    ],
+    [
+      170,
+      255,
+      0
+    ],
+    [
+      85,
+      255,
+      0
+    ],
+    [
+      0,
+      255,
+      0
+    ],
+    [
+      0,
+      255,
+      85
+    ],
+    [
+      0,
+      255,
+      170
+    ],
+    [
+      0,
+      255,
+      255
+    ],
+    [
+      0,
+      170,
+      255
+    ],
+    [
+      0,
+      85,
+      255
+    ],
+    [
+      0,
+      0,
+      255
+    ],
+    [
+      85,
+      0,
+      255
+    ],
+    [
+      170,
+      0,
+      255
+    ],
+    [
+      255,
+      0,
+      255
+    ],
+    [
+      255,
+      0,
+      170
+    ]
+  ],
+  "frameWidth": 90,
+  "frameHeight": 160,
+  "frameCount": 8,
+  "fps": 8,
+  "loop": true,
+  "frameDurationsMs": [
+    180,
+    90,
+    60,
+    80,
+    120,
+    150,
+    160,
+    160
+  ],
+  "visualGuides": [
+    "neutral head outline"
+  ],
+  "frames": [
+    {
+      "index": 0,
+      "file": "frame_00.png",
+      "pose": "pose_00.json",
+      "controlnet": "controlnet_frame_00.png",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 90,
+        "height": 160
+      },
+      "joints": {
+        "nose": [
+          51.505,
+          28.0
+        ],
+        "neck": [
+          42.505,
+          46.0
+        ],
+        "right_shoulder": [
+          44.505,
+          50.0
+        ],
+        "right_elbow": [
+          47.0,
+          69.0
+        ],
+        "right_wrist": [
+          44.0,
+          89.0
+        ],
+        "left_shoulder": [
+          40.505,
+          50.0
+        ],
+        "left_elbow": [
+          39.0,
+          69.0
+        ],
+        "left_wrist": [
+          40.0,
+          87.0
+        ],
+        "right_hip": [
+          45.505,
+          91.0
+        ],
+        "right_knee": [
+          56.65,
+          117.773
+        ],
+        "right_ankle": [
+          50.0,
+          146.0
+        ],
+        "left_hip": [
+          41.505,
+          91.0
+        ],
+        "left_knee": [
+          48.772,
+          119.075
+        ],
+        "left_ankle": [
+          38.0,
+          146.0
+        ],
+        "right_eye": [
+          48.505,
+          26.0
+        ],
+        "left_eye": [
+          47.505,
+          25.0
+        ],
+        "right_ear": [
+          38.505,
+          30.0
+        ],
+        "left_ear": [
+          37.505,
+          29.0
+        ]
+      }
+    },
+    {
+      "index": 1,
+      "file": "frame_01.png",
+      "pose": "pose_01.json",
+      "controlnet": "controlnet_frame_01.png",
+      "rect": {
+        "x": 90,
+        "y": 0,
+        "width": 90,
+        "height": 160
+      },
+      "joints": {
+        "nose": [
+          52.72,
+          28.069
+        ],
+        "neck": [
+          43.72,
+          46.069
+        ],
+        "right_shoulder": [
+          45.72,
+          50.069
+        ],
+        "right_elbow": [
+          47.0,
+          69.0
+        ],
+        "right_wrist": [
+          44.0,
+          89.0
+        ],
+        "left_shoulder": [
+          41.72,
+          50.069
+        ],
+        "left_elbow": [
+          39.0,
+          69.0
+        ],
+        "left_wrist": [
+          40.0,
+          87.0
+        ],
+        "right_hip": [
+          46.24,
+          90.84
+        ],
+        "right_knee": [
+          56.864,
+          117.824
+        ],
+        "right_ankle": [
+          50.0,
+          146.0
+        ],
+        "left_hip": [
+          42.24,
+          90.84
+        ],
+        "left_knee": [
+          48.804,
+          119.087
+        ],
+        "left_ankle": [
+          38.0,
+          146.0
+        ],
+        "right_eye": [
+          49.72,
+          26.069
+        ],
+        "left_eye": [
+          48.72,
+          25.069
+        ],
+        "right_ear": [
+          39.72,
+          30.069
+        ],
+        "left_ear": [
+          38.72,
+          29.069
+        ]
+      }
+    },
+    {
+      "index": 2,
+      "file": "frame_02.png",
+      "pose": "pose_02.json",
+      "controlnet": "controlnet_frame_02.png",
+      "rect": {
+        "x": 180,
+        "y": 0,
+        "width": 90,
+        "height": 160
+      },
+      "joints": {
+        "nose": [
+          46.945,
+          30.15
+        ],
+        "neck": [
+          38.545,
+          48.75
+        ],
+        "right_shoulder": [
+          40.545,
+          52.75
+        ],
+        "right_elbow": [
+          46.4,
+          67.0
+        ],
+        "right_wrist": [
+          46.4,
+          83.0
+        ],
+        "left_shoulder": [
+          36.545,
+          52.75
+        ],
+        "left_elbow": [
+          36.6,
+          67.6
+        ],
+        "left_wrist": [
+          36.6,
+          83.0
+        ],
+        "right_hip": [
+          44.845,
+          92.1
+        ],
+        "right_knee": [
+          57.77,
+          118.06
+        ],
+        "right_ankle": [
+          50.0,
+          146.0
+        ],
+        "left_hip": [
+          40.845,
+          92.1
+        ],
+        "left_knee": [
+          50.023,
+          119.609
+        ],
+        "left_ankle": [
+          38.0,
+          146.0
+        ],
+        "right_eye": [
+          43.945,
+          28.15
+        ],
+        "left_eye": [
+          42.945,
+          27.15
+        ],
+        "right_ear": [
+          33.945,
+          32.15
+        ],
+        "left_ear": [
+          32.945,
+          31.15
+        ]
+      }
+    },
+    {
+      "index": 3,
+      "file": "frame_03.png",
+      "pose": "pose_03.json",
+      "controlnet": "controlnet_frame_03.png",
+      "rect": {
+        "x": 270,
+        "y": 0,
+        "width": 90,
+        "height": 160
+      },
+      "joints": {
+        "nose": [
+          40.7,
+          29.389
+        ],
+        "neck": [
+          34.7,
+          50.389
+        ],
+        "right_shoulder": [
+          36.7,
+          54.389
+        ],
+        "right_elbow": [
+          45.05,
+          62.5
+        ],
+        "right_wrist": [
+          51.8,
+          69.5
+        ],
+        "left_shoulder": [
+          32.7,
+          54.389
+        ],
+        "left_elbow": [
+          31.2,
+          64.45
+        ],
+        "left_wrist": [
+          28.95,
+          74.0
+        ],
+        "right_hip": [
+          43.7,
+          93.0
+        ],
+        "right_knee": [
+          58.121,
+          118.16
+        ],
+        "right_ankle": [
+          50.0,
+          146.0
+        ],
+        "left_hip": [
+          39.7,
+          93.0
+        ],
+        "left_knee": [
+          50.592,
+          119.877
+        ],
+        "left_ankle": [
+          38.0,
+          146.0
+        ],
+        "right_eye": [
+          37.7,
+          27.389
+        ],
+        "left_eye": [
+          36.7,
+          26.389
+        ],
+        "right_ear": [
+          27.7,
+          31.389
+        ],
+        "left_ear": [
+          26.7,
+          30.389
+        ]
+      }
+    },
+    {
+      "index": 4,
+      "file": "frame_04.png",
+      "pose": "pose_04.json",
+      "controlnet": "controlnet_frame_04.png",
+      "rect": {
+        "x": 360,
+        "y": 0,
+        "width": 90,
+        "height": 160
+      },
+      "joints": {
+        "nose": [
+          39.945,
+          27.8
+        ],
+        "neck": [
+          34.945,
+          49.8
+        ],
+        "right_shoulder": [
+          36.945,
+          53.8
+        ],
+        "right_elbow": [
+          44.0,
+          59.0
+        ],
+        "right_wrist": [
+          56.0,
+          59.0
+        ],
+        "left_shoulder": [
+          32.945,
+          53.8
+        ],
+        "left_elbow": [
+          27.0,
+          62.0
+        ],
+        "left_wrist": [
+          23.0,
+          67.0
+        ],
+        "right_hip": [
+          43.645,
+          92.9
+        ],
+        "right_knee": [
+          57.968,
+          118.116
+        ],
+        "right_ankle": [
+          50.0,
+          146.0
+        ],
+        "left_hip": [
+          39.645,
+          92.9
+        ],
+        "left_knee": [
+          50.454,
+          119.81
+        ],
+        "left_ankle": [
+          38.0,
+          146.0
+        ],
+        "right_eye": [
+          36.945,
+          25.8
+        ],
+        "left_eye": [
+          35.945,
+          24.8
+        ],
+        "right_ear": [
+          26.945,
+          29.8
+        ],
+        "left_ear": [
+          25.945,
+          28.8
+        ]
+      }
+    },
+    {
+      "index": 5,
+      "file": "frame_05.png",
+      "pose": "pose_05.json",
+      "controlnet": "controlnet_frame_05.png",
+      "rect": {
+        "x": 450,
+        "y": 0,
+        "width": 90,
+        "height": 160
+      },
+      "joints": {
+        "nose": [
+          43.6,
+          27.011
+        ],
+        "neck": [
+          37.6,
+          48.011
+        ],
+        "right_shoulder": [
+          39.6,
+          52.011
+        ],
+        "right_elbow": [
+          44.6,
+          61.0
+        ],
+        "right_wrist": [
+          53.6,
+          65.0
+        ],
+        "left_shoulder": [
+          35.6,
+          52.011
+        ],
+        "left_elbow": [
+          29.4,
+          63.4
+        ],
+        "left_wrist": [
+          26.4,
+          71.0
+        ],
+        "right_hip": [
+          44.2,
+          92.2
+        ],
+        "right_knee": [
+          57.479,
+          117.981
+        ],
+        "right_ankle": [
+          50.0,
+          146.0
+        ],
+        "left_hip": [
+          40.2,
+          92.2
+        ],
+        "left_knee": [
+          49.87,
+          119.54
+        ],
+        "left_ankle": [
+          38.0,
+          146.0
+        ],
+        "right_eye": [
+          40.6,
+          25.011
+        ],
+        "left_eye": [
+          39.6,
+          24.011
+        ],
+        "right_ear": [
+          30.6,
+          29.011
+        ],
+        "left_ear": [
+          29.6,
+          28.011
+        ]
+      }
+    },
+    {
+      "index": 6,
+      "file": "frame_06.png",
+      "pose": "pose_06.json",
+      "controlnet": "controlnet_frame_06.png",
+      "rect": {
+        "x": 540,
+        "y": 0,
+        "width": 90,
+        "height": 160
+      },
+      "joints": {
+        "nose": [
+          47.855,
+          27.05
+        ],
+        "neck": [
+          40.255,
+          46.45
+        ],
+        "right_shoulder": [
+          42.255,
+          50.45
+        ],
+        "right_elbow": [
+          45.95,
+          65.5
+        ],
+        "right_wrist": [
+          48.2,
+          78.5
+        ],
+        "left_shoulder": [
+          38.255,
+          50.45
+        ],
+        "left_elbow": [
+          34.8,
+          66.55
+        ],
+        "left_wrist": [
+          34.05,
+          80.0
+        ],
+        "right_hip": [
+          44.755,
+          91.5
+        ],
+        "right_knee": [
+          56.902,
+          117.833
+        ],
+        "right_ankle": [
+          50.0,
+          146.0
+        ],
+        "left_hip": [
+          40.755,
+          91.5
+        ],
+        "left_knee": [
+          49.19,
+          119.246
+        ],
+        "left_ankle": [
+          38.0,
+          146.0
+        ],
+        "right_eye": [
+          44.855,
+          25.05
+        ],
+        "left_eye": [
+          43.855,
+          24.05
+        ],
+        "right_ear": [
+          34.855,
+          29.05
+        ],
+        "left_ear": [
+          33.855,
+          28.05
+        ]
+      }
+    },
+    {
+      "index": 7,
+      "file": "frame_07.png",
+      "pose": "pose_07.json",
+      "controlnet": "controlnet_frame_07.png",
+      "rect": {
+        "x": 630,
+        "y": 0,
+        "width": 90,
+        "height": 160
+      },
+      "joints": {
+        "nose": [
+          50.65,
+          27.611
+        ],
+        "neck": [
+          41.85,
+          45.811
+        ],
+        "right_shoulder": [
+          43.85,
+          49.811
+        ],
+        "right_elbow": [
+          46.85,
+          68.5
+        ],
+        "right_wrist": [
+          44.6,
+          87.5
+        ],
+        "left_shoulder": [
+          39.85,
+          49.811
+        ],
+        "left_elbow": [
+          38.4,
+          68.65
+        ],
+        "left_wrist": [
+          39.15,
+          86.0
+        ],
+        "right_hip": [
+          45.15,
+          91.1
+        ],
+        "right_knee": [
+          56.574,
+          117.755
+        ],
+        "right_ankle": [
+          50.0,
+          146.0
+        ],
+        "left_hip": [
+          41.15,
+          91.1
+        ],
+        "left_knee": [
+          48.78,
+          119.078
+        ],
+        "left_ankle": [
+          38.0,
+          146.0
+        ],
+        "right_eye": [
+          47.65,
+          25.611
+        ],
+        "left_eye": [
+          46.65,
+          24.611
+        ],
+        "right_ear": [
+          37.65,
+          29.611
+        ],
+        "left_ear": [
+          36.65,
+          28.611
+        ]
+      }
+    }
+  ]
+}

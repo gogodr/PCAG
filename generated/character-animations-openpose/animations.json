@@ -1,0 +1,16 @@
+{
+  "animations": [
+    "walk_right",
+    "walk_left",
+    "walk_front",
+    "walk_back",
+    "talk",
+    "stand_idle",
+    "punch_right",
+    "being_hit_right"
+  ],
+  "frameWidth": 90,
+  "frameHeight": 160,
+  "frameCount": 8,
+  "fps": 8
+}

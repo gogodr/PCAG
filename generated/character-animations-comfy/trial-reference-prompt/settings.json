@@ -1,0 +1,161 @@
+{
+  "seed": 44960,
+  "lora_strength": 0.8,
+  "denoise": 0.75,
+  "prompt_preset": "reference-faithful",
+  "reference_source": "sheet-right",
+  "reference": "D:\\Projects\\PCAG\\tools\\sprites\\references\\animation-dummy-turnaround.png",
+  "frames": [
+    0,
+    4
+  ],
+  "workflow": {
+    "1": {
+      "class_type": "CheckpointLoaderSimple",
+      "inputs": {
+        "ckpt_name": "v1-5-pruned-emaonly.safetensors"
+      }
+    },
+    "2": {
+      "class_type": "LoraLoader",
+      "inputs": {
+        "model": [
+          "1",
+          0
+        ],
+        "clip": [
+          "1",
+          1
+        ],
+        "lora_name": "mpixel.safetensors",
+        "strength_model": 0.8,
+        "strength_clip": 0.8
+      }
+    },
+    "3": {
+      "class_type": "CLIPTextEncode",
+      "inputs": {
+        "clip": [
+          "2",
+          1
+        ],
+        "text": "pixel, 16-bit pixel art game sprite, articulated animation mannequin, blank smooth oval ivory head, warm cream segmented body panels, muted teal circular shoulder elbow hip knee and ankle joints, dark plum pixel outline, same character design as the reference image, full body right-facing side profile, walking pose, centered single figure, flat pale beige background, crisp pixel edges"
+      }
+    },
+    "4": {
+      "class_type": "CLIPTextEncode",
+      "inputs": {
+        "clip": [
+          "2",
+          1
+        ],
+        "text": "silver, chrome, metal armor, gray body, hair, eyes, nose, mouth, clothes, hat, skin texture, photorealism, 3d rendering, text, watermark, extra limbs, missing limbs, cropped body, multiple characters, motion blur"
+      }
+    },
+    "5": {
+      "class_type": "LoadImage",
+      "inputs": {
+        "image": "pcag_pose_00.png"
+      }
+    },
+    "6": {
+      "class_type": "ControlNetLoader",
+      "inputs": {
+        "control_net_name": "control_v11p_sd15_openpose.pth"
+      }
+    },
+    "7": {
+      "class_type": "ControlNetApplyAdvanced",
+      "inputs": {
+        "positive": [
+          "3",
+          0
+        ],
+        "negative": [
+          "4",
+          0
+        ],
+        "control_net": [
+          "6",
+          0
+        ],
+        "image": [
+          "5",
+          0
+        ],
+        "strength": 1.15,
+        "start_percent": 0.0,
+        "end_percent": 1.0
+      }
+    },
+    "9": {
+      "class_type": "KSampler",
+      "inputs": {
+        "model": [
+          "2",
+          0
+        ],
+        "positive": [
+          "7",
+          0
+        ],
+        "negative": [
+          "7",
+          1
+        ],
+        "latent_image": [
+          "13",
+          0
+        ],
+        "seed": 44960,
+        "steps": 30,
+        "cfg": 7.0,
+        "sampler_name": "dpmpp_2m",
+        "scheduler": "karras",
+        "denoise": 0.75
+      }
+    },
+    "10": {
+      "class_type": "VAEDecode",
+      "inputs": {
+        "samples": [
+          "9",
+          0
+        ],
+        "vae": [
+          "1",
+          2
+        ]
+      }
+    },
+    "11": {
+      "class_type": "SaveImage",
+      "inputs": {
+        "images": [
+          "10",
+          0
+        ],
+        "filename_prefix": "pcag_walk_00"
+      }
+    },
+    "12": {
+      "class_type": "LoadImage",
+      "inputs": {
+        "image": "pcag_sheet_right_reference.png"
+      }
+    },
+    "13": {
+      "class_type": "VAEEncode",
+      "inputs": {
+        "pixels": [
+          "12",
+          0
+        ],
+        "vae": [
+          "1",
+          2
+        ]
+      }
+    }
+  }
+}
