@@ -18,7 +18,7 @@ Use the [gameplay research](../research/01-gameplay-and-ux.md) as the proposed b
 | --- | --- |
 | Host engine | Rendering, audio playback, asset import, input events, animation, platform export |
 | Adventure runtime | Action validation, puzzle state, inventory, dialogue progression, sequence execution, persistence |
-| Standard UI | Action preview, hotspot labels, inventory panel, dialogue panel, feedback, menus |
+| Standard UI | Action preview, element labels, inventory panel, dialogue panel, feedback, menus |
 | Authoring tools | Room setup, data editing, reference checks, preview tools, debugging |
 | Game content | Locations, actors, items, rules, dialogue, media, theme, localized text |
 
@@ -26,9 +26,9 @@ Do not build a universal abstraction over every engine feature. Keep puzzle rule
 
 ## Proposed content model
 
-- **Room:** ID, background layers, walkable geometry, exits, hotspots, entry points, ambient audio.
+- **Room:** ID, background layers, walkable geometry, exits, elements, entry points, ambient audio.
 - **Actor:** ID, current room, position, facing, animation references, inventory owner.
-- **Hotspot:** ID, bounds, label key, enabled condition, approach point, available actions.
+- **Element:** ID, bounds, label key, enabled condition, approach point, available actions.
 - **Item:** ID, icon, text keys, ownership, state, supported interactions.
 - **Interaction rule:** action, source/target filters, prerequisites, priority, effects, presentation sequence, fallback.
 - **Combination rule:** input items, order policy, prerequisites, consumed inputs, produced outputs.
@@ -100,7 +100,7 @@ This scenario exercises the requested loop without requiring a full game.
 | Revisit dialogue | Conditions and visited-topic state remain correct |
 | Save, quit, and load | Puzzle and inventory state restored at a valid location |
 | Skip a sequence | Same consequential state as watching it |
-| Use keyboard controls | Core hotspot, inventory, and dialogue interactions remain available |
+| Use keyboard controls | Core element, inventory, and dialogue interactions remain available |
 | Build a second tiny scene | New content uses shared systems without editing runtime internals |
 | Have one nontechnical creator author a complete adventure from a new project | Rooms, dialogue, puzzles, and a reachable ending created through tools; no code, manual data editing, or developer intervention |
 | Export and reopen the project | Editable content and asset references survive the round trip |
@@ -118,7 +118,7 @@ Creator audience and browser game delivery are decided. Confirm editor deploymen
 
 ### 2. Compare the leading foundations
 
-Study selected Escoria features, then validate a TypeScript/Phaser runtime with one room, a hotspot, movement, and an inventory action. Include a minimal visual editor that writes project data and previews it through that runtime. Compare another browser rendering option only if the spike reveals a specific limitation.
+Study selected Escoria features, then validate a TypeScript/Phaser runtime with one room, an element, movement, and an inventory action. Include a minimal visual editor that writes project data and previews it through that runtime. Compare another browser rendering option only if the spike reveals a specific limitation.
 
 Pin exact versions and record any compatibility or maintenance issues. Use observed outcomes rather than speculative performance scores.
 

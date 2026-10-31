@@ -10,7 +10,7 @@ Read the [roadmap](../../planning/05-roadmap.md) and [development plan](../../pl
 
 The release outcome is independent creation of a complete small adventure by a nontechnical person. Runtime code alone does not satisfy it. Use the development plan's feature completion checklist for data, runtime, creator controls, undo, persistence, preview/export, regression coverage, and guidance.
 
-For gameplay work, read the confirmed [character and interaction rules](../../planning/07-character-and-interactions.md): visible click-to-walk protagonist; View as character speech; Pick up/Use only after successful approach. M0's characterless hotspot player is a temporary proof. Runtime, presentation, creator, and quality responsibilities meet in R03 as well as later puzzle features.
+For gameplay work, read the confirmed [character and interaction rules](../../planning/07-character-and-interactions.md): visible click-to-walk protagonist; View as character speech; Pick up/Use only after successful approach. M0's characterless element player is a temporary proof. Runtime, presentation, creator, and quality responsibilities meet in R03 as well as later puzzle features.
 
 The [player actions and UI requirements](../../planning/08-player-actions-and-ui.md) provide requirement IDs, verb semantics, the selected classic interface, and milestone-mapped acceptance cases. Use them for implementation assignments and reviews; the [reference study](../../research/03-classic-actions-and-controls.md) separates historical evidence from PCAG choices.
 
@@ -37,7 +37,7 @@ For the optional sprite-generation tooling, use [stable-diffusion-prompting](sta
 
 The groups below describe milestone scope, not batch assignments. Work on one backlog ID at a time and wait for explicit user validation before advancing, following the development plan.
 
-1. **M0 / F01–F05:** Use foundation, format, presentation, creator, I/O, and quality together. Deliver background import, a room, an editable hotspot/inspection response, isolated preview, save/reopen, and standalone playable export. Runtime work is limited to the inspection path. Do not build full dialogue or pathfinding first.
+1. **M0 / F01–F05:** Use foundation, format, presentation, creator, I/O, and quality together. Deliver background import, a room, an editable element/inspection response, isolated preview, save/reopen, and standalone playable export. Runtime work is limited to the inspection path. Do not build full dialogue or pathfinding first.
 2. **M1 / R01–R04:** Expand creator, runtime, and presentation for a visible protagonist, click-to-walk, character-spoken View, approach/cancellation, connected rooms, supported navigation geometry, animation mapping, undo, and reopen. Keep format and I/O involved as the model grows.
 3. **M2 / P01–P04:** Add typed puzzle facts, actions, inventory, combinations, and durable consequences with matching visual controls. Introduce content templates and invariant tests.
 4. **M3 / D01–D04:** Add dialogue, sequences, ending, accessible controls, and safe player saves. Author and complete the reference adventure and a second puzzle using the tools.

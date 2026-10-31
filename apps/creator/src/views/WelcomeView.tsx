@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import type { EditorController } from '../app/useEditorWorkspace';
+import { Brand } from '../components/Brand';
+import { UiIcon } from '../components/UiIcon';
 import { pickProjectFolder } from '../data/browserProjectStore';
 
 type Action = 'create' | 'import' | 'continue';
@@ -29,16 +31,18 @@ export function WelcomeView({ editor }: { editor: EditorController }) {
   const choose = (next: Action) => { setAction(next); setFolder(null); editor.setMessage(null); };
 
   return <main className="welcome-page">
-    <div className="welcome-brand">PCAG <span>Creator</span></div>
+    <header className="welcome-header"><Brand /><span>THE ADVENTURE WORKBENCH</span></header>
     {!action ? <section className="welcome-intro">
-      <p className="eyebrow">POINT-AND-CLICK ADVENTURE CREATOR</p>
-      <h1>Build a world worth exploring.</h1>
-      <p>PCAG brings your scenes, artwork, and interactions together in a local project folder. Start something new, bring in a shared project, or continue working on a folder you already have.</p>
-      <div className="welcome-actions">
-        <button type="button" onClick={() => choose('create')}><strong>Create a new project</strong><span>Start with a blank scene in an empty folder.</span></button>
-        <button type="button" onClick={() => choose('import')}><strong>Import a PCAG project file</strong><span>Unpack a shared .pcag file into an empty folder.</span></button>
-        <button type="button" onClick={() => choose('continue')}><strong>Continue a local project</strong><span>Open a folder containing workspace.json.</span></button>
+      <div className="welcome-copy"><p className="eyebrow">THE STORY STARTS HERE</p>
+        <h1>Make worlds<br /><em>worth exploring.</em></h1>
+        <p>Build a point-and-click adventure, one curious detail at a time.</p>
+        <div className="welcome-actions">
+          <div className="welcome-create-card"><span className="welcome-card-number">01</span><div><strong>CREATE AN ADVENTURE</strong><span>Scene · Character · Mystery</span></div><button className="welcome-create" type="button" aria-label="Create a new project" onClick={() => choose('create')}><UiIcon name="add" />New project</button></div>
+          <div className="welcome-secondary-actions"><button type="button" aria-label="Import a PCAG project file" onClick={() => choose('import')}><UiIcon name="upload-file" /><span><strong>Import PCAG file</strong><small>Bring in a shared adventure</small></span></button>
+            <button type="button" aria-label="Continue a local project" onClick={() => choose('continue')}><UiIcon name="history" /><span><strong>Continue locally</strong><small>Pick up where you left off</small></span></button></div>
+        </div>
       </div>
+      <figure className="welcome-art"><div className="welcome-art-frame"><img src={`${import.meta.env.BASE_URL}art/adventure-workbench-v2.png`} alt="Pixel art archway with moonlit ruins, maps, a compass, and a lantern" /></div><figcaption className="welcome-art-caption"><span>THE ADVENTURE WORKBENCH</span><span>Scenes · Stories · Secrets</span></figcaption></figure>
     </section> : <section className="welcome-step">
       <button type="button" className="welcome-back" onClick={() => { setAction(null); setFolder(null); editor.setMessage(null); }}>← All options</button>
       <h1>{action === 'create' ? 'Create a new project' : action === 'import' ? 'Import a PCAG project file' : 'Continue a local project'}</h1>

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { DragEvent, MouseEvent } from 'react';
-import { basename, parentOf, ROOT_FOLDERS } from '../../../../packages/editor-workspace/src/index';
+import { animationAtlasFiles, basename, parentOf, ROOT_FOLDERS } from '../../../../packages/editor-workspace/src/index';
 import type { EditorController } from '../app/useEditorWorkspace';
 import { useAssetActions } from '../features/assets/useAssetActions';
 
@@ -9,7 +9,8 @@ type Editing = { path: string; folder: string; value: string };
 const dragType = 'application/x-pcag-asset-path';
 
 function FileIcon({ kind }: { kind: 'folder' | 'image' | 'audio' | 'file' }) {
-  return <img className="asset-icon" src={`${import.meta.env.BASE_URL}icons/${kind}.png`} alt="" aria-hidden="true" />;
+  const symbols = { folder: 'folder', image: 'image', audio: 'music-note', file: 'description' } as const;
+  return <img className="asset-icon" src={`${import.meta.env.BASE_URL}icons/material/${symbols[kind]}.svg`} alt="" aria-hidden="true" />;
 }
 
 export function AssetsView({ editor }: { editor: EditorController }) {
@@ -23,6 +24,10 @@ export function AssetsView({ editor }: { editor: EditorController }) {
   const [stayingFolder, setStayingFolder] = useState<string | null>(null);
   const { workspace, selectedPath, setSelectedPath } = editor;
   const actions = useAssetActions(editor);
+  const atlasEntries = workspace?.files.map(file => ({ path: file.path, companions: animationAtlasFiles(file) })).filter(entry => entry.companions) ?? [];
+  const hiddenCompanions = new Set(atlasEntries.flatMap(entry => [entry.companions!.gif, entry.companions!.image]));
+  const selectedAtlas = atlasEntries.find(entry => entry.path === selectedPath)?.companions;
+  const previewGif = selectedAtlas && workspace?.files.find(file => file.path === selectedAtlas.gif);
   const currentFolder = browseRoot ? '' : editing?.folder ?? stayingFolder ?? (workspace?.folders.includes(selectedPath) ? selectedPath : parentOf(selectedPath));
   useEffect(() => {
     if (!editing || !workspace) return;
@@ -33,7 +38,15 @@ export function AssetsView({ editor }: { editor: EditorController }) {
   }, [editing?.path, workspace]);
   if (!workspace) return null;
   const folders = browseRoot ? [...ROOT_FOLDERS] : workspace.folders.filter(path => parentOf(path) === currentFolder).sort();
-  const files = workspace.files.filter(file => parentOf(file.path) === currentFolder).sort((a, b) => a.path.localeCompare(b.path));
+  const files = workspace.files.filter(file => parentOf(file.path) === currentFolder && !hiddenCompanions.has(file.path)).sort((a, b) => a.path.localeCompare(b.path));
+  const regenerateGif = async (path: string) => {
+    if (!editor.projectRoot || !window.pcagDesktop) { editor.setMessage('GIF regeneration is available in the desktop Creator app.'); return; }
+    try {
+      await window.pcagDesktop.invoke('animation-regenerate-gif', editor.projectRoot, path);
+      await editor.refreshLocalProject();
+      editor.setMessage('GIF regenerated from the atlas.');
+    } catch (reason) { editor.setMessage(reason instanceof Error ? reason.message : 'Could not regenerate the GIF.'); }
+  };
   const crumbs = currentFolder ? currentFolder.split('/') : [];
   const navigate = (path: string) => { setBrowseRoot(false); setStayingFolder(null); setEditing(null); setSelectedPath(path); setMenu(null); };
   const finishRename = () => {
@@ -59,7 +72,7 @@ export function AssetsView({ editor }: { editor: EditorController }) {
     onDrop: (event: DragEvent) => receiveDrop(event, folder),
   });
   const beginRename = (path: string) => { setBrowseRoot(false); setStayingFolder(parentOf(path)); setEditing({ path, folder: parentOf(path), value: basename(path) }); setMenu(null); };
-  const menuAction = (action: 'copy' | 'cut' | 'rename' | 'delete' | 'paste' | 'import' | 'newFolder') => {
+  const menuAction = (action: 'copy' | 'cut' | 'rename' | 'delete' | 'paste' | 'import' | 'newFolder' | 'regenerate') => {
     if (!menu) return;
     if (action === 'copy' || action === 'cut') actions.setClipboard({ path: menu.path!, cut: action === 'cut' });
     if (action === 'rename') beginRename(menu.path!);
@@ -67,15 +80,16 @@ export function AssetsView({ editor }: { editor: EditorController }) {
     if (action === 'paste') actions.paste(menu.folder);
     if (action === 'import') { importTarget.current = menu.folder; input.current?.click(); }
     if (action === 'newFolder') { const path = actions.addFolder(menu.folder); if (path) { setStayingFolder(menu.folder); setEditing({ path, folder: menu.folder, value: basename(path) }); } }
+    if (action === 'regenerate') void regenerateGif(menu.path!);
     setMenu(null);
   };
-  const fileKind = (path: string) => workspace.folders.includes(path) ? 'folder' : workspace.files.find(file => file.path === path)?.mime.startsWith('image/') ? 'image' : workspace.files.find(file => file.path === path)?.mime.startsWith('audio/') ? 'audio' : 'file';
+  const fileKind = (path: string) => workspace.folders.includes(path) ? 'folder' : atlasEntries.some(entry => entry.path === path) || workspace.files.find(file => file.path === path)?.mime.startsWith('image/') ? 'image' : workspace.files.find(file => file.path === path)?.mime.startsWith('audio/') ? 'audio' : 'file';
   const row = (path: string) => editing?.path === path ? <div key={path} className="asset-row selected"><FileIcon kind={fileKind(path)} /><input ref={renameInput} className="asset-inline-name" aria-label="File or folder name" value={editing.value} onChange={event => setEditing({ ...editing, value: event.target.value })} onKeyDown={event => { if (event.key === 'Enter') finishRename(); if (event.key === 'Escape') setEditing(null); }} /><small>{workspace.folders.includes(path) ? 'Folder' : 'File'}</small></div> : <button key={path} type="button" className={`asset-row ${selectedPath === path ? 'selected' : ''} ${actions.clipboard?.cut && actions.clipboard.path === path ? 'cut' : ''} ${dragOver === path ? 'drop-target' : ''}`}
     draggable={!actions.isRoot(path)} onDragStart={event => { event.dataTransfer.setData(dragType, path); event.dataTransfer.effectAllowed = 'move'; }}
     onClick={() => navigate(path)} onDoubleClick={() => { if (workspace.folders.includes(path)) navigate(path); }}
     onContextMenu={event => openMenu(event, path, workspace.folders.includes(path) ? path : currentFolder)}
     {...(workspace.folders.includes(path) ? dragProps(path) : {})}>
-    <FileIcon kind={fileKind(path)} /><span>{basename(path)}</span><small>{workspace.folders.includes(path) ? 'Folder' : workspace.files.find(file => file.path === path)?.mime.startsWith('image/') ? 'Image' : workspace.files.find(file => file.path === path)?.mime.startsWith('audio/') ? 'Audio' : 'File'}</small>
+    <FileIcon kind={fileKind(path)} /><span>{basename(path)}</span><small>{workspace.folders.includes(path) ? 'Folder' : atlasEntries.some(entry => entry.path === path) ? 'Atlas' : workspace.files.find(file => file.path === path)?.mime.startsWith('video/') ? 'Video' : workspace.files.find(file => file.path === path)?.mime === 'image/gif' ? 'GIF' : workspace.files.find(file => file.path === path)?.mime.startsWith('image/') ? 'Image' : workspace.files.find(file => file.path === path)?.mime.startsWith('audio/') ? 'Audio' : 'File'}</small>
   </button>;
 
   return <div className="asset-explorer" onClick={() => menu && setMenu(null)}>
@@ -88,10 +102,10 @@ export function AssetsView({ editor }: { editor: EditorController }) {
         {folders.map(row)}{files.map(file => row(file.path))}
         {!folders.length && !files.length && <p className="asset-empty">This folder is empty. Drop files here or import them.</p>}
       </section>
-      <aside className="panel asset-detail" aria-label="Asset preview"><h2>Preview</h2><div className="asset-preview-media">{actions.selectedFile?.mime.startsWith('image/') ? <img src={actions.selectedFile.dataUrl} alt={basename(selectedPath)} /> : actions.selectedFile?.mime.startsWith('audio/') ? <audio controls src={actions.selectedFile.dataUrl} /> : <FileIcon kind={actions.selectedFile ? 'file' : 'folder'} />}</div><p>{actions.selectedFile ? `${actions.selectedFile.mime} · ${Math.round(actions.selectedFile.dataUrl.length * .75 / 1024)} KB` : 'Folder'}</p>
+      <aside className="panel asset-detail" aria-label="Asset preview"><h2>Preview</h2><div className="asset-preview-media">{selectedAtlas ? previewGif ? <img src={previewGif.dataUrl} alt={`Animation preview for ${basename(selectedPath)}`} /> : <span>GIF preview is missing.</span> : actions.selectedFile?.mime.startsWith('image/') ? <img src={actions.selectedFile.dataUrl} alt={basename(selectedPath)} /> : actions.selectedFile?.mime.startsWith('video/') ? <video controls src={actions.selectedFile.dataUrl} aria-label={basename(selectedPath)} /> : actions.selectedFile?.mime.startsWith('audio/') ? <audio controls src={actions.selectedFile.dataUrl} /> : <FileIcon kind={actions.selectedFile ? 'file' : 'folder'} />}</div><p>{selectedAtlas ? 'Animation atlas' : actions.selectedFile ? `${actions.selectedFile.mime} · ${Math.round(actions.selectedFile.dataUrl.length * .75 / 1024)} KB` : 'Folder'}</p>{selectedAtlas && <button type="button" onClick={() => void regenerateGif(selectedPath)}>Regenerate GIF from atlas</button>}
         <input ref={input} className="file-input" type="file" multiple aria-label="Asset files" onChange={event => { void actions.addFiles(event.target.files, importTarget.current ?? currentFolder); importTarget.current = null; event.target.value = ''; }} />
       </aside>
     </div>
-    {menu && <div className="asset-context-menu" role="menu" style={{ left: menu.x, top: menu.y }} onClick={event => event.stopPropagation()}>{menu.path && !actions.isRoot(menu.path) ? <>{(['copy', 'cut', 'rename', 'delete'] as const).map(action => <button role="menuitem" type="button" key={action} onClick={() => menuAction(action)}>{action[0]!.toUpperCase() + action.slice(1)}</button>)}</> : <><button role="menuitem" type="button" disabled={!actions.clipboard || !menu.folder} onClick={() => menuAction('paste')}>Paste</button><button role="menuitem" type="button" disabled={!menu.folder} onClick={() => menuAction('import')}>Import files</button><button role="menuitem" type="button" disabled={!menu.folder} onClick={() => menuAction('newFolder')}>New folder</button></>}</div>}
+    {menu && <div className="asset-context-menu" role="menu" style={{ left: menu.x, top: menu.y }} onClick={event => event.stopPropagation()}>{menu.path && !actions.isRoot(menu.path) ? <>{atlasEntries.some(entry => entry.path === menu.path) && <button role="menuitem" type="button" onClick={() => menuAction('regenerate')}>Regenerate GIF from atlas</button>}{(['copy', 'cut', 'rename', 'delete'] as const).map(action => <button role="menuitem" type="button" key={action} onClick={() => menuAction(action)}>{action[0]!.toUpperCase() + action.slice(1)}</button>)}</> : <><button role="menuitem" type="button" disabled={!actions.clipboard || !menu.folder} onClick={() => menuAction('paste')}>Paste</button><button role="menuitem" type="button" disabled={!menu.folder} onClick={() => menuAction('import')}>Import files</button><button role="menuitem" type="button" disabled={!menu.folder} onClick={() => menuAction('newFolder')}>New folder</button></>}</div>}
   </div>;
 }

@@ -12,7 +12,7 @@ Choose versioned declarative project data with stable entity/asset IDs, separate
 
 | Data | Owner | Lifetime / examples |
 | --- | --- | --- |
-| Authored project | Project format; creator applies edits | Rooms, assets, initial values, hotspot bounds, text; later actors, rules, dialogue |
+| Authored project | Project format; creator applies edits | Rooms, assets, initial values, element bounds, text; later actors, rules, dialogue |
 | Editor workspace | Creator | Selection, panel state, undo history, unsaved revision; excluded from playable content |
 | Durable play state | Adventure core | Session facts, ownership, object changes, visited dialogue; later serialized at safe save points |
 | Transient play state | Core for pending work/input mode; presentation for resources | Pending action identity, movement/speech completion, renderer handles; never serialized as project data |
@@ -67,7 +67,7 @@ The confirmed behavior and selected defaults in documents 07/08 govern; Escoria 
 
 | Experience | Default / implementation boundary |
 | --- | --- |
-| Creator | Room library, scene canvas, selected-object inspector; readable fields and typed rule cards, actionable diagnostics, undoable edits. F04 begins with background/hotspot/View text; R01 expands operations. |
+| Creator | Room library, scene canvas, selected-object inspector; readable fields and typed rule cards, actionable diagnostics, undoable edits. F04 begins with background/element/View text; R01 expands operations. |
 | Player layout | Scene above sentence preview, visible verb controls and inventory below. Show only working controls at each milestone. M0 has direct inspection; M1 introduces Walk/View. |
 | Protagonist | Visible from M1, feet anchor and idle/walk/talk mappings; click bounds and approach markers remain separate. |
 | View | UI label for `inspect`; character-attributed speech, no approach by default, including an observable target with an unreachable approach. |

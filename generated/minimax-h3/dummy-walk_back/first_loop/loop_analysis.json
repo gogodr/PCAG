@@ -1,0 +1,17 @@
+{
+  "source": "generated\\minimax-h3\\dummy-walk_back\\dummy-walk-back_0_00001-audio.webm",
+  "sourceFrameCount": 124,
+  "width": 832,
+  "height": 1248,
+  "fps": 24.0,
+  "firstLoopStartFrame": 0,
+  "firstLoopReturnFrame": 28,
+  "keptFrames": 28,
+  "durationSeconds": 1.1666666666666667,
+  "returnFrameDifference": 9.7153,
+  "matchThreshold": 5.5,
+  "otherCloseReturns": [],
+  "animation": "walk_back",
+  "loopVideo": "walk_back_first_loop.mp4",
+  "loopPreview": "walk_back_first_loop.gif"
+}

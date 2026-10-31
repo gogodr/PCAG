@@ -57,8 +57,8 @@ class DesktopDirectoryHandle {
     if (kind && kind !== 'file') throw missing();
     return new DesktopFileHandle(this.root, path, name) as unknown as FileSystemFileHandle;
   }
-  async removeEntry(name: string): Promise<void> {
-    await bridge().invoke('remove', this.root, childPath(this.path, name));
+  async removeEntry(name: string, options?: { recursive?: boolean }): Promise<void> {
+    await bridge().invoke('remove', this.root, childPath(this.path, name), options?.recursive ?? false);
   }
   async *values(): AsyncIterable<FileSystemHandle> {
     const entries = await bridge().invoke<Array<{ name: string; kind: string }>>('entries', this.root, this.path);

@@ -1,7 +1,28 @@
-:root { font-family: "Segoe UI", system-ui, sans-serif; color: #e9f1e8; background: #101b19; font-synthesis: none; }
+:root {
+  font-family: 'IBM Plex Sans', system-ui, sans-serif;
+  color: #f6e2ae;
+  background: #101727;
+  color-scheme: dark;
+  font-synthesis: none;
+  --canvas: #101727;
+  --sidebar: #182337;
+  --surface: #233650;
+  --surface-raised: #34526c;
+  --field: #111c2c;
+  --border: #55798b;
+  --ink: #f6e2ae;
+  --muted: #b9bfc0;
+  --accent: #c8954d;
+  --accent-light: #f1c777;
+  --sea: #71c5b4;
+  --danger: #e17d69;
+}
 * { box-sizing: border-box; }
+html { min-width: 320px; }
 body { margin: 0; }
 button, input, select, textarea { font: inherit; }
 button { cursor: pointer; }
 button:disabled { cursor: not-allowed; opacity: .48; }
-button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, a:focus-visible { outline: 3px solid #eac478; outline-offset: 2px; }
+:is(button, input, select, textarea, a):focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+::selection { background: #f1c77755; color: var(--ink); }
+.loading-screen { display: grid; place-items: center; min-height: 100vh; color: var(--muted); }

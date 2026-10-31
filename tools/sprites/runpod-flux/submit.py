@@ -71,11 +71,10 @@ def reference_panel(path: Path) -> Image.Image:
         return canvas.convert("RGB")
 
 
-def stitched_input(reference: Path, frame: int) -> bytes:
+def stitched_input(reference: Path, pose_path: Path) -> bytes:
     left = reference_panel(reference)
-    pose_path = POSES / f"controlnet_frame_{frame:02}.png"
     with Image.open(pose_path) as source:
-        scale = min(576 / source.width, 960 / source.height)
+        scale = min(1024 / source.width, 1024 / source.height)
         pose = source.convert("RGB").resize(
             (round(source.width * scale), round(source.height * scale)),
             Image.Resampling.NEAREST,
@@ -105,6 +104,7 @@ def main() -> None:
     parser.add_argument("--endpoint-id", default=os.environ.get("RUNPOD_ENDPOINT_ID"))
     parser.add_argument("--job-id", help="Retrieve an already submitted job")
     parser.add_argument("--frame", type=int, choices=range(8), default=0)
+    parser.add_argument("--pose-image", type=Path, help="Override the generated OpenPose frame with a pose image")
     parser.add_argument("--reference", type=Path, default=REFERENCE)
     parser.add_argument("--output", type=Path, default=ROOT / "generated/flux-runpod")
     parser.add_argument("--seed", type=int, default=433890916780646)
@@ -118,7 +118,8 @@ def main() -> None:
 
     payload = None
     if not args.job_id:
-        combined = stitched_input(args.reference, args.frame)
+        pose_path = args.pose_image or POSES / f"controlnet_frame_{args.frame:02}.png"
+        combined = stitched_input(args.reference, pose_path)
         payload = {"input": {"workflow": workflow(args.seed, args.prompt, args.steps), "images": [{"name": "reference_pose.png", "image": base64.b64encode(combined).decode("ascii")}]}}
     if args.dry_run:
         if payload is None:

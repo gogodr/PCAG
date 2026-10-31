@@ -1,0 +1,28 @@
+{
+  "source": "generated\\minimax-h3\\dummy-throw_punch\\dummy-throw-punch_0_00001-audio.webm",
+  "sourceFrameCount": 124,
+  "width": 832,
+  "height": 1248,
+  "fps": 24.0,
+  "firstLoopStartFrame": 0,
+  "firstLoopReturnFrame": 85,
+  "keptFrames": 85,
+  "durationSeconds": 3.5416666666666665,
+  "returnFrameDifference": 0.7274,
+  "matchThreshold": 5.5,
+  "minimumMotionExcursion": 7.5126,
+  "otherCloseReturns": [
+    91,
+    94,
+    98,
+    102,
+    108,
+    111,
+    116,
+    119,
+    122
+  ],
+  "animation": "throw_punch",
+  "loopVideo": "throw_punch_first_loop.mp4",
+  "loopPreview": "throw_punch_first_loop.gif"
+}

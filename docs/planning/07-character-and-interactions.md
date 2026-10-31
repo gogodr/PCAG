@@ -1,6 +1,6 @@
 # Playable character and interaction rules
 
-Date: 2026-10-22. Status: confirmed product direction, with implementation defaults identified below. Rebuild implementation has not started. M1 must deliver character movement, View speech, room traversal, and the approach/cancellation boundary. Physical pickup/use effects remain M2 scope. Previous implementation evidence is historical; see the [reset record](../development/rebuild-reset.md).
+Date: 2026-10-22; status reviewed 2026-10-30. This remains the confirmed product direction. Character records and animation-slot editing now exist, but the browser player still has no visible protagonist, movement, approach, or character-attributed View. M1 must deliver those behaviors; physical pickup/use effects remain M2 scope. See the [current-state review](10-current-state.md) and [use-case map](09-use-case-map.md).
 
 ## Confirmed experience
 
@@ -10,11 +10,11 @@ PCAG targets third-person adventures with a visible, playable character moving t
 - **Pick up:** the character walks to the object, if able, and then picks it up.
 - **Use:** the character walks to the scene object, if able, and then uses it or applies the selected inventory item.
 
-The original M0 player was a direct-hotspot inspection proof for authoring, persistence, and export. M1 replaces that characterless presentation with the visible protagonist and character-attributed observations. M0's historical gate remains limited to the foundation workflow.
+The original M0 player was a direct-element inspection proof for authoring, persistence, and export. M1 replaces that characterless presentation with the visible protagonist and character-attributed observations. M0's historical gate remains limited to the foundation workflow.
 
 ## Action behavior
 
-The following defaults make the confirmed direction implementable. View/Look/Inspect refer to the same observation action; retain the existing internal `inspect` identity rather than adding three different actions. The [player actions and UI requirements](08-player-actions-and-ui.md) now specify a classic verb bar, sentence preview, inventory targeting, and contextual shortcut as the implementation default. View remains explicit and distinct from Pick up/Use.
+The following defaults make the confirmed direction implementable. View/Look/Inspect refer to the same observation action. The former element `inspect` text field was removed; future action authoring should provide one explicit View action rather than three separate actions. The [player actions and UI requirements](08-player-actions-and-ui.md) now specify a classic verb bar, sentence preview, inventory targeting, and contextual shortcut as the implementation default. View remains explicit and distinct from Pick up/Use.
 
 | Input or action | Movement | Result |
 | --- | --- | --- |

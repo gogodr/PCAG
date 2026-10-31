@@ -13,7 +13,7 @@ from pathlib import Path
 import time
 from urllib.request import Request, urlopen
 
-from PIL import Image
+from PIL import Image, ImageFilter
 
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -21,7 +21,7 @@ POSES = ROOT / "generated/character-animations-openpose/walk_right"
 REFERENCE = ROOT / "tools/sprites/references/animation-dummy-turnaround.png"
 
 
-def graph(seed: int, prompt: str) -> dict:
+def graph(seed: int, prompt: str, denoise: float = 0.72, control_strength: float = 1.2) -> dict:
     def node(kind, **inputs):
         return {"class_type": kind, "inputs": inputs}
 
@@ -36,12 +36,12 @@ def graph(seed: int, prompt: str) -> dict:
         "107": node("LoadImage", image="pose.png"),
         "116": node("FluxKontextImageScale", image=["107", 0]),
         "76": node("TextEncodeQwenImageEdit", clip=["38", 0], vae=["39", 0], image=["102", 0], prompt=prompt),
-        "77": node("TextEncodeQwenImageEdit", clip=["38", 0], vae=["39", 0], image=["102", 0], prompt=""),
+        "77": node("TextEncodeQwenImageEdit", clip=["38", 0], vae=["39", 0], image=["102", 0], prompt="extra limbs, facial features, eyes, deformed body, vignette, shadows, props, scenery"),
         "106": node("ControlNetLoader", control_net_name="Qwen-Image-InstantX-ControlNet-Union.safetensors"),
         "111": node("SetUnionControlNetType", control_net=["106", 0], type="openpose"),
-        "104": node("ControlNetApplyAdvanced", positive=["76", 0], negative=["77", 0], control_net=["111", 0], image=["116", 0], vae=["39", 0], strength=1.2, start_percent=0, end_percent=1),
+        "104": node("ControlNetApplyAdvanced", positive=["76", 0], negative=["77", 0], control_net=["111", 0], image=["116", 0], vae=["39", 0], strength=control_strength, start_percent=0, end_percent=1),
         "88": node("VAEEncode", pixels=["102", 0], vae=["39", 0]),
-        "3": node("KSampler", model=["75", 0], positive=["104", 0], negative=["104", 1], latent_image=["88", 0], seed=seed, steps=8, cfg=1, sampler_name="euler", scheduler="beta", denoise=1),
+        "3": node("KSampler", model=["75", 0], positive=["104", 0], negative=["104", 1], latent_image=["88", 0], seed=seed, steps=8, cfg=1, sampler_name="euler", scheduler="beta", denoise=denoise),
         "8": node("VAEDecode", samples=["3", 0], vae=["39", 0]),
         "60": node("SaveImage", images=["8", 0], filename_prefix="pcag_dummy_walk"),
     }
@@ -53,13 +53,25 @@ def image(path: Path, name: str, crop_right_profile: bool = False) -> dict:
     content = path.read_bytes()
     if crop_right_profile:
         with Image.open(BytesIO(content)) as source:
-            rgba = source.convert("RGBA")
-            region = rgba.crop((rgba.width * 3 // 4, 0, rgba.width, rgba.height))
-            visible = region.getchannel("A").point(lambda value: 255 if value >= 128 else 0)
-            bounds = visible.getbbox()
+            rgb = source.convert("RGB")
+            region = rgb.crop((rgb.width * 3 // 4, 0, rgb.width, rgb.height))
+            pixels = list(region.get_flattened_data())
+            core = Image.frombytes(
+                "L", region.size,
+                bytes(255 if (r > 125 and g > 95 and b > 75) or (g > r + 8 and b > r + 8 and g > 50) else 0 for r, g, b in pixels),
+            ).filter(ImageFilter.MaxFilter(19)).filter(ImageFilter.MinFilter(19))
+            near_core = core.filter(ImageFilter.MaxFilter(13))
+            mask = Image.frombytes(
+                "L", region.size,
+                bytes(255 if c or (n and r > g + 16 and g < 45 and b < 55) else 0
+                      for (r, g, b), c, n in zip(pixels, core.get_flattened_data(), near_core.get_flattened_data())),
+            ).filter(ImageFilter.MaxFilter(5)).filter(ImageFilter.MinFilter(5))
+            bounds = mask.getbbox()
             if bounds is None:
                 raise ValueError("No right-facing figure found in the reference sheet")
-            figure = region.crop(bounds)
+            figure = region.convert("RGBA")
+            figure.putalpha(mask)
+            figure = figure.crop(bounds)
             scale = min(842 / figure.height, 480 / figure.width)
             figure = figure.resize((round(figure.width * scale), round(figure.height * scale)), Image.Resampling.NEAREST)
             canvas = Image.new("RGBA", (512, 896), "#f0d9c5")
@@ -80,17 +92,25 @@ def api(url: str, key: str, body: dict | None = None) -> dict:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--endpoint-id", default=os.environ.get("RUNPOD_ENDPOINT_ID"))
+    parser.add_argument("--job-id", help="Resume an existing job without submitting another frame")
+    parser.add_argument("--wait-seconds", type=int, default=900)
     parser.add_argument("--frame", type=int, default=0, choices=range(8))
     parser.add_argument("--reference", type=Path, default=REFERENCE)
     parser.add_argument("--output", type=Path, default=Path("generated/qwen-runpod"))
     parser.add_argument("--seed", type=int, default=433890916780646)
-    parser.add_argument("--prompt", default="16-bit pixel art animation dummy, side view walking right, same appearance as reference image, exact limb placement shown by the pose image, plain transparent background")
+    parser.add_argument("--denoise", type=float, default=0.72)
+    parser.add_argument("--control-strength", type=float, default=1.2)
+    parser.add_argument("--prompt", default="Edit the reference animation dummy into a side-view walk facing right. Match the supplied OpenPose guide precisely. Keep one blank cream oval head with no face, teal joint caps, two arms and two legs, the same 16-bit pixel art design and proportions. Full body centered on a uniform pale beige background.")
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
+    if not 0 <= args.denoise <= 1 or args.control_strength < 0:
+        parser.error("--denoise must be 0..1 and --control-strength must be nonnegative")
 
     pose = POSES / f"controlnet_frame_{args.frame:02}.png"
-    payload = {"input": {"workflow": graph(args.seed, args.prompt), "images": [image(args.reference, "reference.png", args.reference == REFERENCE), image(pose, "pose.png")]}}
+    payload = None if args.job_id else {"input": {"workflow": graph(args.seed, args.prompt, args.denoise, args.control_strength), "images": [image(args.reference, "reference.png", args.reference == REFERENCE), image(pose, "pose.png")]}}
     if args.dry_run:
+        if payload is None:
+            parser.error("--dry-run requires a new frame submission")
         print(json.dumps({"frame": args.frame, "pose": str(pose), "nodes": len(payload["input"]["workflow"]), "payload_bytes": len(json.dumps(payload))}, indent=2))
         return
 
@@ -105,10 +125,14 @@ def main() -> None:
         parser.error("RUNPOD_API_KEY and --endpoint-id (or RUNPOD_ENDPOINT_ID) are required")
 
     base = f"https://api.runpod.ai/v2/{args.endpoint_id}"
-    job = api(f"{base}/run", key, payload)
-    job_id = job["id"]
-    print(f"Submitted frame {args.frame}: job {job_id}")
-    deadline = time.monotonic() + 900
+    if args.job_id:
+        job_id = args.job_id
+        print(f"Resuming frame {args.frame}: job {job_id}")
+    else:
+        job = api(f"{base}/run", key, payload)
+        job_id = job["id"]
+        print(f"Submitted frame {args.frame}: job {job_id}")
+    deadline = time.monotonic() + args.wait_seconds
     while time.monotonic() < deadline:
         result = api(f"{base}/status/{job_id}", key)
         if result.get("status") in {"COMPLETED", "FAILED", "CANCELLED", "TIMED_OUT"}:
@@ -117,7 +141,8 @@ def main() -> None:
     else:
         raise TimeoutError(f"Runpod job {job_id} is still running")
     if result.get("status") != "COMPLETED":
-        raise RuntimeError(f"Runpod job {job_id}: {result.get('status')}: {result.get('error')}")
+        details = result.get("output", {}).get("details") if isinstance(result.get("output"), dict) else None
+        raise RuntimeError(f"Runpod job {job_id}: {result.get('status')}: {result.get('error')}; details: {details}")
     images = result.get("output", {}).get("images", [])
     if not images:
         raise RuntimeError(f"Runpod job {job_id} returned no images")

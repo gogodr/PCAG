@@ -24,7 +24,7 @@ Keep `adventure-core` independent of React, Phaser, DOM, and storage. Project fo
 2. Verify compatible dependency releases against official documentation when selecting versions; pin the tested set and lockfile. Record environment requirements. Avoid committing speculative version numbers from old research.
 3. For F01, inspect a specific Escoria revision/documentation version for room state, action execution, inventory, and UI separation. Record observed facts and references separately from PCAG choices. This is a focused design review, not source reuse.
 4. Record short decisions for the project model, preview lifecycle, persistence, and export packaging. Include context, choice, alternatives that materially matter, consequences, and evidence or an outstanding experiment.
-5. Build the thin shared player and creator slice: background import, room, hotspot geometry, inspection text, Play/restart, save/reopen, playable export. Use prebuilt player packaging so creators never need a compiler or build service.
+5. Build the thin shared player and creator slice: background import, room, element geometry, inspection text, Play/restart, save/reopen, playable export. Use prebuilt player packaging so creators never need a compiler or build service.
 6. Exercise the integration in a real browser and run the export through an independent static HTTP server. Record exact tested browser/dependency versions, audio startup behavior, persistence findings, and preview teardown results.
 
 Do not grow full navigation, inventory, or a generic plugin framework to complete M0. If the selected presentation integration blocks an essential workflow, capture a reproducible failure and evaluate the smallest alternative before expanding the system.

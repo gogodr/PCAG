@@ -1,0 +1,35 @@
+{
+  "animation": "Receive Hit",
+  "source": "dummy-receive_hit",
+  "fps": 12,
+  "frameWidth": 90,
+  "frameHeight": 160,
+  "frameCount": 17,
+  "sourceFrameIndices": [
+    0,
+    34,
+    36,
+    38,
+    40,
+    68,
+    70,
+    72,
+    74,
+    76,
+    78,
+    80,
+    82,
+    84,
+    86,
+    88,
+    90
+  ],
+  "backgroundRemoved": true,
+  "sourceCrop": [
+    80,
+    28,
+    742,
+    1205
+  ],
+  "loop": true
+}

@@ -37,7 +37,7 @@ Sources: [Godot features](https://godotengine.org/features/), [Escoria overview]
 
 ## Godot: retained desktop comparison
 
-Godot offers scenes, custom resources, an extensible editor, and a dedicated 2D/UI workflow. These map naturally to rooms, hotspots, items, and shared interface scenes. It uses the MIT license. [Official features](https://godotengine.org/features/)
+Godot offers scenes, custom resources, an extensible editor, and a dedicated 2D/UI workflow. These map naturally to rooms, elements, items, and shared interface scenes. It uses the MIT license. [Official features](https://godotengine.org/features/)
 
 If the project returned to a desktop engine workflow, typed GDScript and a custom addon would be a possible implementation. This is no longer the proposed project stack.
 

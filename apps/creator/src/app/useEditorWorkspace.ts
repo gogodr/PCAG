@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { loadSample, sampleAssets } from '../../../../examples/reference-adventure/sample';
-import { validateProject } from '../../../../packages/project-format/src/index';
 import type { Diagnostic, Project } from '../../../../packages/project-format/src/index';
 import { allowedMime, assetUrls, parentOf, parseWorkspace, rootOf, sampleWorkspace, validSegment } from '../../../../packages/editor-workspace/src/index';
 import type { Workspace } from '../../../../packages/editor-workspace/src/index';
@@ -9,9 +8,16 @@ import { decodeWorkspace } from '../../../../packages/project-io/src/workspace-a
 import { starterWorkspace } from '../../../../packages/editor-workspace/src/starter';
 import { forgetRecentProject, openRecentProject, readLocalProject, requireEmptyFolder, useProjectFolder, writeLocalProject } from '../data/browserProjectStore';
 import { desktopRoot } from '../data/desktopFileHandles';
+import type { EditorView } from './editorViews';
+import { workspaceReadiness } from './workspaceReadiness';
 
-export type EditorView = 'Project' | 'Assets' | 'Scenes';
+export type { EditorView } from './editorViews';
 export interface PreviewSession { project: Project; urls: ReadonlyMap<string, string>; run: number }
+
+/** Asset data URLs are immutable; copy their records without duplicating the large strings on each edit. */
+function editableWorkspace(workspace: Workspace): Workspace {
+  return { ...workspace, project: structuredClone(workspace.project), folders: [...workspace.folders], files: workspace.files.map(file => ({ ...file })) };
+}
 
 export function useEditorWorkspace() {
   const [workspace, setWorkspace] = useState<Workspace | null>(null);
@@ -147,7 +153,7 @@ export function useEditorWorkspace() {
   };
 
   useEffect(() => {
-    if (!folderHandle.current || (view !== 'Assets' && view !== 'Scenes')) return;
+    if (!folderHandle.current || (view !== 'Assets' && view !== 'Scenes' && view !== 'Characters')) return;
     const refresh = () => { void refreshLocalProject().catch((error: unknown) => setMessage(error instanceof Error ? error.message : 'Could not scan the project folder.')); };
     refresh();
     window.addEventListener('focus', refresh);
@@ -160,16 +166,13 @@ export function useEditorWorkspace() {
     if (!workspace.project.rooms.some(scene => scene.id === selectedSceneId)) setSelectedSceneId(workspace.project.startRoomId);
   }, [workspace, selectedPath, selectedSceneId]);
 
-  const projectResult = workspace ? validateProject(workspace.project) : null;
-  const filesPresent = workspace?.project.assets.every(asset => workspace.files.some(file => file.path === asset.path)) ?? false;
-  const resolutionValid = !!workspace && Number.isSafeInteger(workspace.targetWidth) && Number.isSafeInteger(workspace.targetHeight) && workspace.targetWidth > 0 && workspace.targetHeight > 0 && workspace.targetWidth <= 8192 && workspace.targetHeight <= 8192;
-  const ready = !!projectResult?.ok && filesPresent && resolutionValid;
+  const { projectResult, filesPresent, resolutionValid, ready } = useMemo(() => workspaceReadiness(workspace), [workspace]);
   const room = workspace?.project.rooms.find(scene => scene.id === selectedSceneId) ?? workspace?.project.rooms[0];
   const urls = useMemo(() => workspace ? assetUrls(workspace) : new Map<string, string>(), [workspace]);
 
   const edit = (change: (next: Workspace) => void) => {
     if (!workspace) return;
-    const next = structuredClone(workspace);
+    const next = editableWorkspace(workspace);
     change(next);
     setPast(current => [...current, workspace]);
     setFuture([]);
@@ -281,7 +284,7 @@ export function useEditorWorkspace() {
     setPreview({ project: copy, urls, run: ++run.current });
   };
 
-  return { workspace, directory, loading, choosingProject, saving, create, openDirectory, showWelcome, closeProject, returnToProject, view, setView, selectedPath, setSelectedPath, selectedSceneId, setSelectedSceneId,
+  return { workspace, directory, projectRoot: window.pcagDesktop && folderHandle.current ? desktopRoot(folderHandle.current) : null, loading, choosingProject, saving, create, openDirectory, showWelcome, closeProject, returnToProject, view, setView, selectedPath, setSelectedPath, selectedSceneId, setSelectedSceneId,
     message, messageId: messageEvent?.id, setMessage, loadDiagnostics, exportBusy, preview, setPreview, past, future,
     projectResult, filesPresent, resolutionValid, ready, room, urls,
     edit, undo, redo, refreshLocalProject, chooseSceneBackground, exportProject, open, exportCurrent, startPreview };

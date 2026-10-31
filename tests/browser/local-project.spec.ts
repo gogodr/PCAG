@@ -61,7 +61,7 @@ test('landing choices create a local folder project that persists after reload',
   await page.getByRole('button', { name: 'Select project folder' }).click();
   await page.getByRole('button', { name: 'Continue project' }).click();
   await expect(page.getByLabel('Project name')).toHaveValue('Forest path');
-  await expect(page.getByRole('heading', { name: 'Project actions' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Ready for adventure?' })).toBeVisible();
   await page.getByRole('button', { name: 'Close project' }).click();
   await expect(page.getByRole('button', { name: 'Create a new project' })).toBeVisible();
   await expect(page.getByRole('navigation', { name: 'Editor views' })).toHaveCount(0);

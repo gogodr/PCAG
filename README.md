@@ -1,6 +1,6 @@
 # PCAG - Point-and-click adventure framework
 
-PCAG is being rebuilt one validated backlog item at a time. **F01-F05 and the M0 gate are accepted; F06 editor navigation awaits validation before M1.** The original 24-item scope is retained, with F06 added by the editor interface request.
+PCAG is being built around a desktop creator and a browser player. **F01-F05 and the M0 inspection proof are accepted; the expanded F06 editor foundation awaits re-review and user validation.** Character and animation authoring controls exist, but playable character movement and complete adventure rules remain future milestones.
 
 The release objective is a desktop creator in which a nontechnical person can author, test, save, reopen, and export a complete small adventure without programming or developer intervention. The exported player runs in a browser.
 
@@ -15,7 +15,7 @@ npm run check
 npm run dev
 ```
 
-`npm run dev` opens the creator in Electron. It opens the recent local project when available; otherwise its landing page offers **Create a new project**, **Import a PCAG project file**, and **Continue a local project**. Choose a project folder through the system folder dialog. New and imported projects require an empty folder; continuing requires a folder with `workspace.json`. The working folder contains real asset files in `backgrounds`, `images`, `sounds`, and `music`, and edits are written there automatically. A `.pcag` export is a compressed sharing copy. In a separate terminal, `npm run dev:player` opens the sample player at <http://127.0.0.1:5174/>. The creator also exports a standalone player ZIP. Characters, Items, and Game Map are disabled placeholders.
+`npm run dev` opens the creator in Electron. It opens the recent local project when available; otherwise its landing page offers **Create a new project**, **Import a PCAG project file**, and **Continue a local project**. Choose a project folder through the system folder dialog. New and imported projects require an empty folder; continuing requires a folder with `workspace.json`. The working folder contains real asset files in `backgrounds`, `images`, `sounds`, `music`, `animation`, and `video`; supported media may live in subfolders. Edits are written there automatically. A `.pcag` export is a compressed sharing copy. In a separate terminal, `npm run dev:player` opens the sample player at <http://127.0.0.1:5174/>. The creator also exports a standalone player ZIP. Project, Assets, Characters, Scenes, and Animations are active views. The player currently renders a scene and direct element inspection; it does not yet run a full character-led adventure.
 
 ## Source layout
 
@@ -27,7 +27,9 @@ npm run dev
 - [F06 results and review guide](docs/development/f06-review.md)
 - [Project format contract](docs/development/project-format.md)
 - [Accepted foundation decisions](docs/decisions/0001-rebuild-foundation.md)
-- [Development plan and unchanged backlog](docs/planning/06-development-plan.md)
+- [Current-state review](docs/planning/10-current-state.md)
+- [Platform use-case map](docs/planning/09-use-case-map.md)
+- [Development plan and ordered backlog](docs/planning/06-development-plan.md)
 - [Validation log](docs/development/validation-log.md)
 - [Product roadmap](docs/planning/05-roadmap.md)
 - [Character and interaction requirements](docs/planning/07-character-and-interactions.md)

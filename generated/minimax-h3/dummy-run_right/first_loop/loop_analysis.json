@@ -1,0 +1,19 @@
+{
+  "source": "generated\\minimax-h3\\dummy-run_right\\dummy-run-right_0_00001-audio.webm",
+  "sourceFrameCount": 124,
+  "width": 992,
+  "height": 1056,
+  "fps": 24.0,
+  "firstLoopStartFrame": 0,
+  "firstLoopReturnFrame": 26,
+  "keptFrames": 26,
+  "durationSeconds": 1.0833333333333333,
+  "returnFrameDifference": 6.9241,
+  "matchThreshold": 5.5,
+  "otherCloseReturns": [
+    72
+  ],
+  "animation": "run_right",
+  "loopVideo": "run_right_first_loop.mp4",
+  "loopPreview": "run_right_first_loop.gif"
+}

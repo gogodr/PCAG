@@ -1,0 +1,186 @@
+{
+  "animation": "Walk Front",
+  "source": "dummy-walk_front",
+  "fps": 12,
+  "frameWidth": 90,
+  "frameHeight": 160,
+  "frameCount": 15,
+  "sourceFrameIndices": [
+    2,
+    4,
+    6,
+    8,
+    10,
+    12,
+    14,
+    16,
+    18,
+    20,
+    22,
+    24,
+    26,
+    28,
+    30
+  ],
+  "backgroundRemoved": true,
+  "sourceCrop": [
+    54,
+    -26,
+    775,
+    1256
+  ],
+  "loop": true,
+  "image": "atlas.png",
+  "frames": [
+    {
+      "index": 0,
+      "sourceFrame": 2,
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 90,
+        "height": 160
+      }
+    },
+    {
+      "index": 1,
+      "sourceFrame": 4,
+      "rect": {
+        "x": 90,
+        "y": 0,
+        "width": 90,
+        "height": 160
+      }
+    },
+    {
+      "index": 2,
+      "sourceFrame": 6,
+      "rect": {
+        "x": 180,
+        "y": 0,
+        "width": 90,
+        "height": 160
+      }
+    },
+    {
+      "index": 3,
+      "sourceFrame": 8,
+      "rect": {
+        "x": 270,
+        "y": 0,
+        "width": 90,
+        "height": 160
+      }
+    },
+    {
+      "index": 4,
+      "sourceFrame": 10,
+      "rect": {
+        "x": 360,
+        "y": 0,
+        "width": 90,
+        "height": 160
+      }
+    },
+    {
+      "index": 5,
+      "sourceFrame": 12,
+      "rect": {
+        "x": 450,
+        "y": 0,
+        "width": 90,
+        "height": 160
+      }
+    },
+    {
+      "index": 6,
+      "sourceFrame": 14,
+      "rect": {
+        "x": 540,
+        "y": 0,
+        "width": 90,
+        "height": 160
+      }
+    },
+    {
+      "index": 7,
+      "sourceFrame": 16,
+      "rect": {
+        "x": 630,
+        "y": 0,
+        "width": 90,
+        "height": 160
+      }
+    },
+    {
+      "index": 8,
+      "sourceFrame": 18,
+      "rect": {
+        "x": 720,
+        "y": 0,
+        "width": 90,
+        "height": 160
+      }
+    },
+    {
+      "index": 9,
+      "sourceFrame": 20,
+      "rect": {
+        "x": 810,
+        "y": 0,
+        "width": 90,
+        "height": 160
+      }
+    },
+    {
+      "index": 10,
+      "sourceFrame": 22,
+      "rect": {
+        "x": 900,
+        "y": 0,
+        "width": 90,
+        "height": 160
+      }
+    },
+    {
+      "index": 11,
+      "sourceFrame": 24,
+      "rect": {
+        "x": 990,
+        "y": 0,
+        "width": 90,
+        "height": 160
+      }
+    },
+    {
+      "index": 12,
+      "sourceFrame": 26,
+      "rect": {
+        "x": 1080,
+        "y": 0,
+        "width": 90,
+        "height": 160
+      }
+    },
+    {
+      "index": 13,
+      "sourceFrame": 28,
+      "rect": {
+        "x": 1170,
+        "y": 0,
+        "width": 90,
+        "height": 160
+      }
+    },
+    {
+      "index": 14,
+      "sourceFrame": 30,
+      "rect": {
+        "x": 1260,
+        "y": 0,
+        "width": 90,
+        "height": 160
+      }
+    }
+  ]
+}

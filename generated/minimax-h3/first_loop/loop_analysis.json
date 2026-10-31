@@ -1,0 +1,18 @@
+{
+  "source": "generated\\minimax-h3\\pcag-dummy-walk-loop_0_00001-audio.webm",
+  "sourceFrameCount": 124,
+  "width": 832,
+  "height": 1248,
+  "fps": 24.0,
+  "firstLoopStartFrame": 0,
+  "firstLoopReturnFrame": 37,
+  "keptFrames": 37,
+  "durationSeconds": 1.5416666666666667,
+  "returnFrameDifference": 4.852,
+  "matchThreshold": 5.5463,
+  "otherCloseReturns": [
+    87
+  ],
+  "loopVideo": "walk_right_first_loop.mp4",
+  "loopPreview": "walk_right_first_loop.gif"
+}

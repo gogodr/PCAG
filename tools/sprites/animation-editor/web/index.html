@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PCAG · Animation Editor</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand"><span class="brand-mark">✦</span><div><strong>PCAG</strong><small>ANIMATION EDITOR</small></div></div>
+      <div class="top-actions">
+        <label class="select-label" for="animation">SOURCE LOOP</label>
+        <select id="animation" aria-label="Animation loop"></select>
+        <span id="save-state" class="save-state">Source frames are untouched</span>
+      </div>
+    </header>
+
+    <main>
+      <div class="page-title">
+        <div><div class="eyebrow">SPRITE WORKSHOP / FIRST LOOP</div><h1 id="animation-title">Choose an animation</h1><p>Shape the timing, remove frames, and prepare the final sprite export.</p></div>
+        <div class="history-controls">
+          <button id="undo" class="button secondary" title="Undo (Ctrl+Z)" disabled>↶ <span>Undo</span></button>
+          <button id="redo" class="button secondary" title="Redo (Ctrl+Y)" disabled>↷ <span>Redo</span></button>
+        </div>
+      </div>
+
+      <section class="workspace">
+        <div class="stage-panel">
+          <div class="panel-heading"><span>PREVIEW</span><span id="stage-info"></span></div>
+          <div class="stage checkerboard"><img id="preview" alt="Selected animation frame"></div>
+          <div class="playback">
+            <button id="play" class="play-button" aria-label="Pause animation">Ⅱ</button>
+            <input id="scrub" type="range" min="0" max="0" value="0" aria-label="Current frame">
+            <span id="playback-position">1 / 1</span>
+          </div>
+        </div>
+
+        <aside class="tools-panel">
+          <div class="panel-heading">EDIT LOOP</div>
+          <div class="tool-section">
+            <label class="field-label" for="target-fps">TARGET FPS</label>
+            <div class="inline-field"><input id="target-fps" type="number" min="1" max="60" value="6"><button id="reduce" class="button primary">Reduce frames</button></div>
+            <p>Keep evenly spaced frames from the current selection. The first and last poses stay in the sequence.</p>
+          </div>
+          <div class="tool-section">
+            <div class="field-label">BACKGROUND</div>
+            <button id="background" class="button wide secondary">Remove background</button>
+            <p id="background-note">Flat video backdrop is visible.</p>
+          </div>
+          <div class="tool-section">
+            <div class="field-label">SELECTED FRAME</div>
+            <div class="selected-line"><strong id="selected-index">—</strong><span id="selected-time"></span></div>
+            <button id="remove-frame" class="button wide danger">Remove frame</button>
+            <p>Click a thumbnail below to select it. Removal changes this edit only.</p>
+          </div>
+          <div class="tool-section export-section">
+            <div class="field-label">EXPORT SIZE</div>
+            <div class="size-fields"><label>W <input id="width" type="number" min="1" max="1024" value="90"></label><span>×</span><label>H <input id="height" type="number" min="1" max="1024" value="160"></label></div>
+            <div class="export-buttons"><button id="export-gif" class="button primary">Export GIF</button><button id="export-atlas" class="button primary">Export atlas</button></div>
+            <p>Exports save in a new <code>manual_exports</code> folder beside this loop.</p>
+          </div>
+        </aside>
+      </section>
+
+      <section class="timeline-panel">
+        <div class="timeline-heading"><div><span class="eyebrow">FRAME STRIP</span><h2>Current sequence <span id="frame-count"></span></h2></div><span id="duration"></span></div>
+        <div id="frames" class="frames"></div>
+      </section>
+      <div id="message" class="message" role="status" aria-live="polite"></div>
+    </main>
+  </div>
+  <script src="/app.js"></script>
+</body>
+</html>

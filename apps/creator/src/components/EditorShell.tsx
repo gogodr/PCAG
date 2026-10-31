@@ -1,20 +1,20 @@
 import type { ReactNode } from 'react';
-import type { EditorController, EditorView } from '../app/useEditorWorkspace';
+import type { EditorController } from '../app/useEditorWorkspace';
+import { editorViews, viewDescription } from '../app/editorViews';
 import { SceneSwitcher } from '../features/scenes/SceneSwitcher';
+import { Brand } from './Brand';
+import { UiIcon } from './UiIcon';
 
-const views = ['Project', 'Assets', 'Characters', 'Items', 'Scenes', 'Game Map'] as const;
 export function EditorShell({ editor, children }: { editor: EditorController; children: ReactNode }) {
+  const projectName = editor.workspace?.project.name || 'Untitled project';
   return <main className="app-shell">
-    <aside className="sidebar"><a className="wordmark" href="./" aria-label="PCAG Creator home">PCAG<span>Creator</span></a><p className="sidebar-label">WORKSPACE</p>
-      <nav aria-label="Editor views">{views.map(item => {
-        const placeholder = item === 'Characters' || item === 'Items' || item === 'Game Map';
-        const disabled = !editor.workspace || editor.choosingProject || placeholder;
-        return <button type="button" key={item} disabled={disabled} aria-current={!disabled && editor.view === item ? 'page' : undefined} onClick={() => { if (!disabled) editor.setView(item as EditorView); }}>{item}{placeholder && <span>Later</span>}</button>;
-      })}</nav><div className="sidebar-bottom">{editor.workspace?.project.name ?? 'No project open'}</div>
+    <aside className="sidebar"><a className="sidebar-brand" href="./" aria-label="PCAG Creator home"><Brand compact /></a>
+      <div className="sidebar-project"><span className="sidebar-caption">Current project</span><strong title={projectName}>{projectName}</strong></div>
+      <nav aria-label="Editor views"><span className="sidebar-caption">THE WORKBENCH</span>{editorViews.map(item => <button type="button" key={item.id} aria-current={editor.view === item.id ? 'page' : undefined} onClick={() => editor.setView(item.id)}><UiIcon name={item.icon} />{item.label}</button>)}</nav>
+      <div className="sidebar-bottom"><span className={`save-indicator${editor.saving ? ' is-saving' : ''}`} aria-hidden="true" />{editor.directory ? editor.saving ? 'Saving changes…' : 'Saved to project folder' : 'Sample workspace'}</div>
     </aside>
-    <div className="main-column"><header className="topbar"><div><p className="eyebrow">Editor / {editor.workspace && !editor.choosingProject ? editor.view : 'Start'}</p><div className="topbar-title">{editor.workspace && !editor.choosingProject && editor.view === 'Scenes' ? <><h1>Scenes:</h1><SceneSwitcher editor={editor} /></> : <h1>{editor.workspace && !editor.choosingProject ? editor.view : 'Projects'}</h1>}</div></div><div className="top-actions"><button type="button" onClick={editor.undo} disabled={!editor.workspace || editor.choosingProject || !editor.past.length}>Undo</button><button type="button" onClick={editor.redo} disabled={!editor.workspace || editor.choosingProject || !editor.future.length}>Redo</button></div></header>
-      <div className="content">{children}</div>
-      <footer><span>PCAG / Creator</span><span>Build your adventure, one scene at a time.</span></footer>
+    <div className="main-column"><header className="topbar"><div className="topbar-context"><p className="eyebrow">{projectName} / {editor.view}</p><div className="topbar-title"><h1>{editor.view}</h1>{editor.view === 'Scenes' && <SceneSwitcher editor={editor} />}</div><p className="topbar-description">{viewDescription(editor.view)}</p></div>{editor.view !== 'Animations' && <div className="top-actions" aria-label="Edit history"><button type="button" onClick={editor.undo} disabled={!editor.past.length} title="Undo last edit">Undo</button><button type="button" onClick={editor.redo} disabled={!editor.future.length} title="Redo last edit">Redo</button></div>}</header>
+      <div className={`content${editor.view === 'Animations' ? ' animation-content' : ''}`}>{children}</div>
     </div>
   </main>;
 }

@@ -1,6 +1,7 @@
 import { spawn } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { createServer } from 'node:net';
+import { watch } from 'node:fs';
 import path from 'node:path';
 
 const require = createRequire(import.meta.url);
@@ -46,14 +47,40 @@ try {
   await waitForServer();
   const env = { ...process.env, PCAG_CREATOR_DEV_URL: `http://127.0.0.1:${port}/` };
   delete env.ELECTRON_RUN_AS_NODE;
-  desktop = spawn(electron, ['.'], { stdio: 'inherit', env });
-  await new Promise((resolve, reject) => {
-    desktop.once('error', reject);
-    desktop.once('exit', (code, signal) => {
-      if (code === 0) resolve();
-      else reject(new Error(`Electron exited with ${signal ?? `code ${code}`}.`));
-    });
+  const electronDirectory = path.resolve('apps/creator/electron');
+  let restartTimer;
+  let restartRequested = false;
+  let stopping = false;
+  const watcher = watch(electronDirectory, (_event, filename) => {
+    if (filename !== 'main.cjs' && filename !== 'preload.cjs') return;
+    clearTimeout(restartTimer);
+    restartTimer = setTimeout(() => {
+      if (stopping) return;
+      restartRequested = true;
+      desktop?.kill();
+    }, 150);
   });
+  try {
+    await new Promise((resolve, reject) => {
+      const launch = () => {
+        desktop = spawn(electron, ['.'], { stdio: 'inherit', env });
+        desktop.once('error', reject);
+        desktop.once('exit', (code, signal) => {
+          if (restartRequested && !stopping) {
+            restartRequested = false;
+            console.log('Restarting Creator after Electron code changed.');
+            launch();
+          } else if (code === 0) resolve();
+          else reject(new Error(`Electron exited with ${signal ?? `code ${code}`}.`));
+        });
+      };
+      launch();
+    });
+  } finally {
+    stopping = true;
+    clearTimeout(restartTimer);
+    watcher.close();
+  }
 } finally {
   server.kill();
   desktop?.kill();

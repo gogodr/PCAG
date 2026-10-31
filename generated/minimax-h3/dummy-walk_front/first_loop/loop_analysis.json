@@ -1,0 +1,22 @@
+{
+  "source": "generated\\minimax-h3\\dummy-walk_front\\dummy-walk-front_0_00001-audio.webm",
+  "sourceFrameCount": 124,
+  "width": 832,
+  "height": 1248,
+  "fps": 24.0,
+  "firstLoopStartFrame": 0,
+  "firstLoopReturnFrame": 31,
+  "keptFrames": 31,
+  "durationSeconds": 1.2916666666666667,
+  "returnFrameDifference": 3.4981,
+  "matchThreshold": 5.5,
+  "otherCloseReturns": [
+    61,
+    90,
+    119,
+    122
+  ],
+  "animation": "walk_front",
+  "loopVideo": "walk_front_first_loop.mp4",
+  "loopPreview": "walk_front_first_loop.gif"
+}

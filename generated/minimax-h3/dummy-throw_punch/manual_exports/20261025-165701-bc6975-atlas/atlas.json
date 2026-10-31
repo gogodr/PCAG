@@ -1,0 +1,142 @@
+{
+  "animation": "Throw Punch",
+  "source": "dummy-throw_punch",
+  "fps": 12,
+  "frameWidth": 90,
+  "frameHeight": 160,
+  "frameCount": 11,
+  "sourceFrameIndices": [
+    0,
+    20,
+    22,
+    24,
+    26,
+    74,
+    76,
+    78,
+    80,
+    82,
+    84
+  ],
+  "backgroundRemoved": true,
+  "sourceCrop": [
+    114,
+    -36,
+    857,
+    1285
+  ],
+  "loop": true,
+  "image": "atlas.png",
+  "frames": [
+    {
+      "index": 0,
+      "sourceFrame": 0,
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 90,
+        "height": 160
+      }
+    },
+    {
+      "index": 1,
+      "sourceFrame": 20,
+      "rect": {
+        "x": 90,
+        "y": 0,
+        "width": 90,
+        "height": 160
+      }
+    },
+    {
+      "index": 2,
+      "sourceFrame": 22,
+      "rect": {
+        "x": 180,
+        "y": 0,
+        "width": 90,
+        "height": 160
+      }
+    },
+    {
+      "index": 3,
+      "sourceFrame": 24,
+      "rect": {
+        "x": 270,
+        "y": 0,
+        "width": 90,
+        "height": 160
+      }
+    },
+    {
+      "index": 4,
+      "sourceFrame": 26,
+      "rect": {
+        "x": 360,
+        "y": 0,
+        "width": 90,
+        "height": 160
+      }
+    },
+    {
+      "index": 5,
+      "sourceFrame": 74,
+      "rect": {
+        "x": 450,
+        "y": 0,
+        "width": 90,
+        "height": 160
+      }
+    },
+    {
+      "index": 6,
+      "sourceFrame": 76,
+      "rect": {
+        "x": 540,
+        "y": 0,
+        "width": 90,
+        "height": 160
+      }
+    },
+    {
+      "index": 7,
+      "sourceFrame": 78,
+      "rect": {
+        "x": 630,
+        "y": 0,
+        "width": 90,
+        "height": 160
+      }
+    },
+    {
+      "index": 8,
+      "sourceFrame": 80,
+      "rect": {
+        "x": 720,
+        "y": 0,
+        "width": 90,
+        "height": 160
+      }
+    },
+    {
+      "index": 9,
+      "sourceFrame": 82,
+      "rect": {
+        "x": 810,
+        "y": 0,
+        "width": 90,
+        "height": 160
+      }
+    },
+    {
+      "index": 10,
+      "sourceFrame": 84,
+      "rect": {
+        "x": 900,
+        "y": 0,
+        "width": 90,
+        "height": 160
+      }
+    }
+  ]
+}

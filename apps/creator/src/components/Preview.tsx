@@ -14,6 +14,6 @@ export function Preview({ project, urls, onClose }: Props) {
   return <section className="preview" aria-label="Adventure preview">
     <div className="preview-bar"><h2>Preview</h2><span role="status">{status}</span><button type="button" onClick={onClose}>Close preview</button></div>
     <div className="preview-stage" ref={stage} aria-label="Room preview" />
-    <p className="observation" role="status">{observation ?? 'Click a hotspot to inspect it.'}</p>
+    <p className="observation" role="status">{observation ?? 'Click an element to inspect it.'}</p>
   </section>;
 }

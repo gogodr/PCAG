@@ -1,0 +1,37 @@
+{
+  "animation": "Original Walk Right",
+  "source": "original-walk-right",
+  "fps": 12,
+  "frameWidth": 90,
+  "frameHeight": 160,
+  "frameCount": 19,
+  "sourceFrameIndices": [
+    0,
+    2,
+    4,
+    6,
+    8,
+    10,
+    12,
+    14,
+    16,
+    18,
+    20,
+    22,
+    24,
+    26,
+    28,
+    30,
+    32,
+    34,
+    36
+  ],
+  "backgroundRemoved": true,
+  "sourceCrop": [
+    78,
+    -33,
+    813,
+    1274
+  ],
+  "loop": true
+}

@@ -7,4 +7,4 @@ This example is a snapshot of `C:\Users\gogod\Documents\PCAG\Test1` taken on 202
 - [project.json](project.json) is the authored project representation generated from that manifest and its files for the bundled creator and player samples.
 - [sample.ts](sample.ts) maps the bundled files into the creator's sample workspace and player asset URLs.
 
-The current snapshot has no hotspots. The sample's project data and files can be validated with `npm run review:format`.
+The current snapshot has no elements. The sample's project data and files can be validated with `npm run review:format`.

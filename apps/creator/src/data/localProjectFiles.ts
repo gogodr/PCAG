@@ -1,12 +1,15 @@
 import { allowedMime, basename, parentOf, ROOT_FOLDERS, rootOf, validSegment } from '../../../../packages/editor-workspace/src/index';
 import type { Workspace, WorkspaceFile } from '../../../../packages/editor-workspace/src/index';
-import type { Project, Room } from '../../../../packages/project-format/src/index';
+import { validateProject } from '../../../../packages/project-format/src/index';
+import type { Character, Project, Room } from '../../../../packages/project-format/src/index';
+import { desktopRoot } from './desktopFileHandles';
 
 const manifestName = 'workspace.json';
 type LocalRoom = Omit<Room, 'backgroundAssetId'> & { backgroundPath: string };
+type LocalCharacter = Omit<Character, 'referenceAssetId'> & { referencePath: string };
 interface LocalManifest {
   format: 'pcag-local-project'; version: 2; targetWidth: number; targetHeight: number;
-  project: Omit<Project, 'assets' | 'rooms'> & { rooms: LocalRoom[] };
+  project: Omit<Project, 'assets' | 'rooms' | 'characters'> & { rooms: LocalRoom[]; characters?: LocalCharacter[] };
 }
 type LegacyManifest = Omit<Workspace, 'files'> & { files: unknown[] };
 type DirectoryEntries = FileSystemDirectoryHandle & { values(): AsyncIterable<FileSystemHandle> };
@@ -50,7 +53,13 @@ function localManifest(workspace: Workspace): LocalManifest {
     format: 'pcag-local-project', version: 2,
     targetWidth: workspace.targetWidth, targetHeight: workspace.targetHeight,
     project: {
-      schemaVersion: 1, id: workspace.project.id, name: workspace.project.name, startRoomId: workspace.project.startRoomId,
+      schemaVersion: 1, id: workspace.project.id, name: workspace.project.name, startRoomId: workspace.project.startRoomId, gameState: workspace.project.gameState,
+      characters: (workspace.project.characters ?? []).map(character => {
+        const referencePath = workspace.project.assets.find(asset => asset.id === character.referenceAssetId)?.path;
+        if (!referencePath) throw new Error(`Character reference is missing: ${character.name}`);
+        const { referenceAssetId: _id, ...rest } = character;
+        return { ...rest, referencePath };
+      }),
       rooms: workspace.project.rooms.map(room => {
         const backgroundPath = workspace.project.assets.find(asset => asset.id === room.backgroundAssetId)?.path;
         if (!backgroundPath) throw new Error(`Scene background is missing: ${room.name}`);
@@ -81,9 +90,19 @@ export async function readLocalProject(handle: FileSystemDirectoryHandle, previo
     folders.push(folder);
     for await (const entry of (directory as DirectoryEntries).values()) {
       const path = `${folder}/${entry.name}`;
-      if (entry.kind === 'directory') await scan(entry as FileSystemDirectoryHandle, path);
+      if (entry.kind === 'directory') {
+        if ((rootOf(folder) === 'animation' || rootOf(folder) === 'video') && entry.name.startsWith('_')) {
+          try { await (entry as FileSystemDirectoryHandle).getFileHandle('source.json'); continue; }
+          catch { /* A regular user folder is still an asset folder. */ }
+        }
+        await scan(entry as FileSystemDirectoryHandle, path);
+      }
       else {
         const file = await (entry as FileSystemFileHandle).getFile();
+        if (rootOf(path) === 'images' && entry.name.endsWith('_atlas.json') && file.size < 1_000_000) {
+          try { if (JSON.parse(await file.text()).format === 'pcag-animation-atlas') continue; }
+          catch { /* Other JSON files remain visible for normal validation. */ }
+        }
         const mime = allowedMime(path) ?? 'application/octet-stream';
         const bytes = new Uint8Array(await file.arrayBuffer());
         files.push({ id: previousFiles.get(path)?.id ?? legacyAssets.get(path)?.id ?? await idForPath(path), path, mime, dataUrl: dataUrl(mime, bytes) });
@@ -105,10 +124,22 @@ export async function readLocalProject(handle: FileSystemDirectoryHandle, previo
       assets.push(asset);
     }
     const { backgroundPath: _path, backgroundAssetId: _id, ...rest } = room as LocalRoom & Room;
-    return { ...rest, backgroundAssetId: asset.id };
+    return { ...rest, backgroundAssetId: asset.id, sceneState: rest.sceneState ?? {} };
   }));
-  const project: Project = { schemaVersion: 1, id: source.id, name: source.name, startRoomId: source.startRoomId, assets, rooms };
-  return { format: 'pcag-workspace', version: 1, targetWidth: manifest.targetWidth, targetHeight: manifest.targetHeight, project, folders, files };
+  const characters = (source.characters ?? []).map(character => {
+    const referencePath = 'referencePath' in character ? character.referencePath : legacy?.project.assets.find(asset => asset.id === character.referenceAssetId)?.path;
+    const asset = assets.find(item => item.path === referencePath);
+    if (!asset) throw new Error(`Character reference is missing: ${character.name}`);
+    const { referencePath: _path, referenceAssetId: _id, ...rest } = character as LocalCharacter & Character;
+    return { ...rest, referenceAssetId: asset.id, animations: rest.animations.map(animation => {
+      const previous = animation as typeof animation & { width?: number };
+      const { width: _width, ...current } = previous;
+      return { ...current, height: current.height ?? _width ?? 160, mirrorX: current.mirrorX ?? false };
+    }) };
+  });
+  const project: Project = { schemaVersion: 1, id: source.id, name: source.name, startRoomId: source.startRoomId, gameState: source.gameState ?? {}, assets, rooms, characters };
+  const checked = validateProject(project);
+  return { format: 'pcag-workspace', version: 1, targetWidth: manifest.targetWidth, targetHeight: manifest.targetHeight, project: checked.ok ? checked.project : project, folders, files };
 }
 
 async function assertUnchanged(handle: FileSystemDirectoryHandle, file: WorkspaceFile): Promise<void> {
@@ -137,11 +168,30 @@ export async function writeLocalProject(handle: FileSystemDirectoryHandle, works
     await writable.write(bytesOf(file).slice().buffer);
     await writable.close();
   }
+  if (window.pcagDesktop && previous) {
+    const byId = new Map(workspace.files.map(file => [file.id, file]));
+    for (const old of previous.files) {
+      const next = byId.get(old.id);
+      if (next && next.path !== old.path && (rootOf(old.path) === 'animation' || rootOf(old.path) === 'video') && (rootOf(next.path) === 'animation' || rootOf(next.path) === 'video') && /\.(mp4|webm|mov|gif)$/i.test(old.path)) {
+        await assertUnchanged(handle, old);
+        await window.pcagDesktop.invoke('animation-transfer-work', desktopRoot(handle), old.path, next.path);
+      }
+    }
+  }
   const currentPaths = new Set(workspace.files.map(file => file.path));
   for (const file of previous?.files ?? []) if (!currentPaths.has(file.path)) {
     await assertUnchanged(handle, file);
     const name = basename(file.path);
-    await (parentOf(file.path) ? folderAt(handle, parentOf(file.path), false) : Promise.resolve(handle)).then(parent => parent.removeEntry(name));
+    const parent = await (parentOf(file.path) ? folderAt(handle, parentOf(file.path), false) : Promise.resolve(handle));
+    await parent.removeEntry(name);
+    if ((rootOf(file.path) === 'animation' || rootOf(file.path) === 'video') && /\.(mp4|webm|mov|gif)$/i.test(name)) {
+      const helperName = `_${name.slice(0, name.lastIndexOf('.'))}`;
+      try {
+        const helper = await parent.getDirectoryHandle(helperName);
+        const metadata = JSON.parse(await (await helper.getFileHandle('source.json')).getFile().then(source => source.text())) as { file?: string };
+        if (metadata.file === name) await parent.removeEntry(helperName, { recursive: true });
+      } catch (error) { if (!(error instanceof DOMException && error.name === 'NotFoundError')) throw error; }
+    }
   }
   for (const folder of [...(previous?.folders ?? [])].sort((a, b) => b.length - a.length)) if (!folders.has(folder) && !ROOT_FOLDERS.includes(folder as typeof ROOT_FOLDERS[number])) {
     await folderAt(handle, parentOf(folder), false).then(parent => parent.removeEntry(basename(folder)));

@@ -14,7 +14,7 @@
         "name": "Test 1",
         "width": 1600,
         "height": 900,
-        "hotspots": [],
+        "elements": [],
         "backgroundPath": "backgrounds/scene_2/bg.png"
       },
       {
@@ -22,7 +22,7 @@
         "name": "Test 2",
         "width": 1600,
         "height": 900,
-        "hotspots": [],
+        "elements": [],
         "backgroundPath": "backgrounds/scene_2/bg.png"
       }
     ]

@@ -1,0 +1,22 @@
+{
+  "source": "generated\\minimax-h3\\dummy-idle\\dummy-idle_0_00001-audio.webm",
+  "sourceFrameCount": 124,
+  "width": 832,
+  "height": 1248,
+  "fps": 24.0,
+  "firstLoopStartFrame": 0,
+  "firstLoopReturnFrame": 66,
+  "keptFrames": 66,
+  "durationSeconds": 2.75,
+  "returnFrameDifference": 1.1019,
+  "matchThreshold": 4.3162,
+  "otherCloseReturns": [
+    108,
+    115,
+    119,
+    122
+  ],
+  "animation": "idle",
+  "loopVideo": "idle_first_loop.mp4",
+  "loopPreview": "idle_first_loop.gif"
+}

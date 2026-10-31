@@ -17,7 +17,7 @@ for (const app of ['creator', 'player'] as const) {
     const url = new URL(baseURL);
     if (app === 'player') url.port = String(Number(url.port) + 1);
     await page.goto(url.href);
-    await expect(page).toHaveTitle(app === 'creator' ? 'PCAG Creator' : 'PCAG Player');
+    await expect(page).toHaveTitle(app === 'creator' ? 'PCAG Adventure Studio' : 'PCAG Player');
     if (app === 'creator') {
       await expect(page.getByRole('heading', { level: 1 })).toHaveText('Project');
       await expect(page.getByRole('status')).toContainText('Project checks passed.');
@@ -73,16 +73,16 @@ test('creator identifies a missing background field; player refuses invalid cont
   await expect(page.locator('canvas')).toHaveCount(0);
 });
 
-test('creator scene editor changes a background and keeps hotspot tools hidden', async ({ page, baseURL }) => {
+test('creator scene editor changes a background and keeps element tools hidden', async ({ page, baseURL }) => {
   if (!baseURL) throw new Error('Missing test baseURL.');
   await page.goto(baseURL);
   await expect(page.getByRole('status')).toContainText('Project checks passed.');
   await page.getByRole('button', { name: 'Scenes', exact: true }).click();
   await expect(page.getByRole('treeitem', { name: 'Background' })).toHaveAttribute('aria-selected', 'true');
   await page.getByRole('button', { name: 'Add element' }).click();
-  await page.getByRole('menu', { name: 'Add element type' }).getByRole('menuitem', { name: 'Hotspot' }).click();
-  await page.getByLabel('Element name').press('Enter');
-  await expect(page.getByRole('complementary', { name: 'Inspector' })).toContainText('Hotspot');
+  await page.getByRole('menu', { name: 'Add element type' }).getByRole('menuitem', { name: 'Box element' }).click();
+  await page.getByLabel('Rename element').press('Enter');
+  await expect(page.getByRole('region', { name: 'Inspector' })).toContainText('Box element');
   await expect(page.getByLabel('Scene background')).toHaveCount(0);
   await page.getByRole('treeitem', { name: 'Background' }).click();
   await page.getByLabel('Scene background').selectOption(alternateBackground);
@@ -91,18 +91,18 @@ test('creator scene editor changes a background and keeps hotspot tools hidden',
   await page.getByRole('button', { name: 'Redo' }).click();
   await expect(page.getByLabel('Scene background')).toHaveValue(alternateBackground);
   await expect(page.locator('.scene-canvas .layout')).toBeVisible();
-  await expect(page.getByRole('complementary', { name: 'Inspector' }).getByRole('combobox')).toHaveCount(1);
+  await expect(page.getByRole('region', { name: 'Inspector' }).getByRole('combobox')).toHaveCount(1);
   await expect(page.getByLabel('View text')).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Preview room' })).toHaveCount(0);
 });
 
-test('standalone player runs the same View hotspot interaction', async ({ page, baseURL }) => {
+test('standalone player uses the element name after loading legacy View text', async ({ page, baseURL }) => {
   if (!baseURL) throw new Error('Missing test baseURL.');
   await page.route(/\/project(?:-[\w-]+)?\.json(?:\?.*)?$/, async route => {
     if (route.request().resourceType() !== 'fetch') { await route.continue(); return; }
     const response = await route.fetch();
     const project = await response.json();
-    project.rooms[0].hotspots.push({ id: 'hotspot_test', name: 'Test hotspot', bounds: { x: 1060, y: 140, width: 100, height: 100 }, inspect: 'A test observation.' });
+    project.rooms[0].elements.push({ id: 'element_test', name: 'Test element', bounds: { x: 1060, y: 140, width: 100, height: 100 }, inspect: 'A test observation.' });
     await route.fulfill({ response, json: project });
   });
   const url = new URL(baseURL); url.port = String(Number(url.port) + 1);
@@ -112,5 +112,5 @@ test('standalone player runs the same View hotspot interaction', async ({ page, 
   const box = await canvas.boundingBox();
   if (!box) throw new Error('Player canvas has no box.');
   await canvas.click({ position: { x: box.width * 1110 / 1600, y: box.height * 190 / 900 } });
-  await expect(page.locator('#observation')).toHaveText('A test observation.');
+  await expect(page.locator('#observation')).toHaveText('You see Test element.');
 });

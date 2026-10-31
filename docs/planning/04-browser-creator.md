@@ -1,6 +1,6 @@
 # Browser adventure creator
 
-Date: 2026-10-21. Status: product direction recorded; implementation recommendations pending a prototype.
+Date: 2026-10-21. Status: historical creator-host proposal. The nontechnical authoring goal remains in force; the recommendation to ship the creator as a browser app was superseded by the [Electron decision](../decisions/0003-electron-creator.md). Read the [current-state review](10-current-state.md) for implementation status.
 
 Execution is now organized in the [product roadmap](05-roadmap.md) and [development plan](06-development-plan.md). Those documents define staged delivery; capabilities described below need not all be complete in the initial foundation proof.
 
@@ -37,7 +37,7 @@ The [character and interaction rules](07-character-and-interactions.md) are conf
 1. Start from an adventure template with the standard player UI already configured.
 2. Import a background, create a room, and set its dimensions.
 3. Draw walkable space, place the protagonist, and mark entrances/exits.
-4. Place an object or draw a hotspot; give it a name and available actions.
+4. Place an object or draw an element; give it a name and available actions.
 5. Create inventory items by choosing images and entering descriptions.
 6. Configure interactions using readable conditions and action cards.
 7. Write a conversation and attach it to a character.
@@ -71,7 +71,7 @@ Do not silently turn an editable rule into generated source that becomes the onl
 | --- | --- | --- |
 | Project management | New/open, autosave status, import/export | Accounts, cloud sync, team collaboration |
 | Asset library | Import images/audio, thumbnails, names, reference tracking | Tags, bulk processing, shared libraries |
-| Room editor | Layers, placement, hotspots, walkable polygon, exits, approach points | Reusable room assemblies, richer camera/depth tools |
+| Room editor | Layers, placement, elements, walkable polygon, exits, approach points | Reusable room assemblies, richer camera/depth tools |
 | Character setup | Import supplied animations and map idle/walk/talk states | Animation creation, rigging, lip-sync production |
 | Item editor | Icon, description, ownership, combinations | Richer item transformations and templates |
 | Rule editor | Common triggers, conditions, ordered actions, fallbacks | Advanced condition groups and reusable behaviors |
@@ -122,7 +122,7 @@ Use the two-room proof adventure in the [framework plan](03-framework-plan.md) t
 
 The participant must independently:
 
-1. Create and connect rooms, place a character, and define walkable areas and hotspots.
+1. Create and connect rooms, place a character, and define walkable areas and elements.
 2. Author inspection responses, item collection/use, and an item combination.
 3. Write a conversation with choices and at least one condition-dependent option.
 4. Connect puzzle consequences to world changes and a reachable ending.

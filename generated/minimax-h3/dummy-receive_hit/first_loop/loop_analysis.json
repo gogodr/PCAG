@@ -1,0 +1,26 @@
+{
+  "source": "generated\\minimax-h3\\dummy-receive_hit\\dummy-receive-hit_0_00001-audio.webm",
+  "sourceFrameCount": 124,
+  "width": 832,
+  "height": 1248,
+  "fps": 24.0,
+  "firstLoopStartFrame": 0,
+  "firstLoopReturnFrame": 91,
+  "keptFrames": 91,
+  "durationSeconds": 3.7916666666666665,
+  "returnFrameDifference": 0.7401,
+  "matchThreshold": 1.2,
+  "minimumMotionExcursion": 2.0,
+  "otherCloseReturns": [
+    95,
+    98,
+    102,
+    107,
+    110,
+    119,
+    121
+  ],
+  "animation": "receive_hit",
+  "loopVideo": "receive_hit_first_loop.mp4",
+  "loopPreview": "receive_hit_first_loop.gif"
+}

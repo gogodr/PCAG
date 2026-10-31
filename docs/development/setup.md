@@ -34,7 +34,7 @@ npm run dev:player
 - Creator: <http://127.0.0.1:5173/> — starts with the last permitted local project or a landing page with three actions. Use a browser with `window.showDirectoryPicker()` to select an empty folder for a new or imported project, or an existing project folder to continue. The local `workspace.json` stores project settings and scene background paths; the Assets view scans the actual asset folders. Project and player ZIP export remain available.
 - Player: <http://127.0.0.1:5174/> — game-only sample room in a full-width, centered 16:9 frame.
 
-The player loads the validated sample project and supports clicking its View hotspot. The creator accepts JPEG, PNG, SVG, JPG, and WebP in backgrounds and images, and MP3, WAV, and OGG in sounds and music. These formats work in subfolders too. SVG imports are limited to static artwork without scripts or external references.
+The player loads the validated sample project and supports clicking its View element. The creator accepts JPEG, PNG, SVG, JPG, and WebP in backgrounds and images, and MP3, WAV, and OGG in sounds and music. These formats work in subfolders too. SVG imports are limited to static artwork without scripts or external references.
 
 Both servers bind to loopback only and fail if their ports are occupied. Stop the conflicting server or pass `-- --port 5180` when manually reviewing. Stop servers with Ctrl+C. No app needs the other server to run.
 

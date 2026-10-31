@@ -24,7 +24,7 @@ test('project export, reopen, invalid-file preservation, and independent HTTP pl
   if (!baseURL) throw new Error('Missing test baseURL.');
   const sample = JSON.parse(await readFile(new URL('../../examples/reference-adventure/project.json', import.meta.url), 'utf8'));
   const alternateBackground = sample.assets.find((asset: { path: string }) => asset.path === 'backgrounds/scene_1/bg.png').id;
-  await installFolderPicker(page, Array.from({ length: 4 }, () => `import-${crypto.randomUUID()}`));
+  await installFolderPicker(page, Array.from({ length: 5 }, () => `import-${crypto.randomUUID()}`));
   const importFile = async (name: string, buffer: Buffer) => {
     await page.getByRole('button', { name: 'Open another project' }).click();
     await page.getByRole('button', { name: 'Import a PCAG project file' }).click();
@@ -37,8 +37,20 @@ test('project export, reopen, invalid-file preservation, and independent HTTP pl
   await page.getByRole('button', { name: 'Scenes', exact: true }).click();
   await page.getByLabel('Scene background').selectOption(alternateBackground);
   await page.getByRole('button', { name: 'Add element' }).click();
-  await page.getByRole('menu', { name: 'Add element type' }).getByRole('menuitem', { name: 'Hotspot' }).click();
-  await page.getByLabel('Element name').press('Enter');
+  await page.getByRole('menu', { name: 'Add element type' }).getByRole('menuitem', { name: 'Box element' }).click();
+  await page.getByLabel('Rename element').press('Enter');
+  await page.getByRole('treeitem', { name: 'SceneState' }).click();
+  await page.getByRole('button', { name: 'Add variable' }).click();
+  await page.getByLabel('Variable name').fill('doorOpen');
+  await page.getByLabel('Variable name').press('Enter');
+  await page.getByRole('group', { name: 'Variable doorOpen' }).getByLabel('Variable value').selectOption('true');
+  await page.getByRole('treeitem', { name: 'GameState' }).click();
+  await page.getByRole('button', { name: 'Add variable' }).click();
+  await page.getByLabel('Variable name').fill('score');
+  await page.getByLabel('Variable name').press('Enter');
+  await page.getByRole('group', { name: 'Variable score' }).getByLabel('Variable type').selectOption('Number');
+  await page.getByRole('group', { name: 'Variable score' }).getByLabel('Variable value').fill('7');
+  await page.getByRole('group', { name: 'Variable score' }).getByLabel('Variable default value').fill('2');
   await page.getByRole('button', { name: 'Project', exact: true }).click();
 
   const saveEvent = page.waitForEvent('download');
@@ -48,8 +60,23 @@ test('project export, reopen, invalid-file preservation, and independent HTTP pl
   const savedBytes = await readFile(await saved.path());
   const savedWorkspace = readWorkspaceArchive(savedBytes);
   const savedProject = savedWorkspace.project;
-  expect(savedProject.rooms[0].hotspots[0].name).toBe('Hotspot');
-  expect(savedProject.rooms[0].hotspots[0].id).toMatch(/^id_/);
+  expect(savedProject.rooms[0].elements[0].name).toBe('Element');
+  expect(savedProject.rooms[0].elements[0].id).toMatch(/^id_/);
+  expect(savedProject.rooms[0].sceneState).toEqual({ doorOpen: { value: true, defaultValue: false } });
+  expect(savedProject.gameState).toEqual({ score: { value: 7, defaultValue: 2 } });
+
+  const legacyWorkspace = structuredClone(savedWorkspace);
+  legacyWorkspace.project.rooms[0].hotspots = legacyWorkspace.project.rooms[0].elements;
+  delete legacyWorkspace.project.rooms[0].elements;
+  await importFile('legacy.pcag', writeWorkspaceArchive(legacyWorkspace));
+  await page.getByRole('button', { name: 'Scenes', exact: true }).click();
+  await expect(page.getByRole('treeitem', { name: 'Element' })).toBeVisible();
+  await page.getByRole('button', { name: 'Project', exact: true }).click();
+  const migratedDownload = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Export project' }).click();
+  const migrated = readWorkspaceArchive(await readFile(await (await migratedDownload).path()));
+  expect(migrated.project.rooms[0].elements).toHaveLength(savedProject.rooms[0].elements.length);
+  expect(migrated.project.rooms[0]).not.toHaveProperty('hotspots');
 
   await page.getByLabel('Project name').fill('Unsaved change');
   await importFile('project.pcag', savedBytes);
@@ -83,8 +110,12 @@ test('project export, reopen, invalid-file preservation, and independent HTTP pl
   expect(files.has('index.html')).toBe(true);
   expect(files.has('backgrounds/scene_1/bg.png')).toBe(true);
   const exportedProject = JSON.parse(files.get('project.json')!.toString('utf8'));
-  expect({ ...exportedProject, assets: exportedProject.assets.toSorted((a: { id: string }, b: { id: string }) => a.id.localeCompare(b.id)) })
-    .toEqual({ ...savedProject, assets: savedProject.assets.toSorted((a: { id: string }, b: { id: string }) => a.id.localeCompare(b.id)) });
+  const comparable = (project: typeof savedProject) => ({
+    ...project,
+    characters: project.characters ?? [],
+    assets: project.assets.toSorted((a: { id: string }, b: { id: string }) => a.id.localeCompare(b.id)),
+  });
+  expect(comparable(exportedProject)).toEqual(comparable(savedProject));
 
   const server = createServer((request, response) => {
     const path = decodeURIComponent((request.url ?? '/').split('?')[0]!).replace(/^\//, '') || 'index.html';
@@ -103,7 +134,7 @@ test('project export, reopen, invalid-file preservation, and independent HTTP pl
     const box = await canvas.boundingBox();
     if (!box) throw new Error('Exported canvas has no box.');
     await canvas.click({ position: { x: box.width / 2, y: box.height / 2 } });
-    await expect(page.locator('#observation')).toHaveText('You see Hotspot.');
+    await expect(page.locator('#observation')).toHaveText('You see Element.');
   } finally {
     await new Promise<void>((resolve, reject) => server.close(error => error ? reject(error) : resolve()));
   }

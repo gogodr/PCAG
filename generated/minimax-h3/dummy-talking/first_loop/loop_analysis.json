@@ -1,0 +1,24 @@
+{
+  "source": "generated\\minimax-h3\\dummy-talking\\dummy-talking_0_00001-audio.webm",
+  "sourceFrameCount": 124,
+  "width": 832,
+  "height": 1248,
+  "fps": 24.0,
+  "firstLoopStartFrame": 0,
+  "firstLoopReturnFrame": 98,
+  "keptFrames": 98,
+  "durationSeconds": 4.083333333333333,
+  "returnFrameDifference": 1.0749,
+  "matchThreshold": 3.049,
+  "otherCloseReturns": [
+    102,
+    107,
+    111,
+    115,
+    119,
+    122
+  ],
+  "animation": "talking",
+  "loopVideo": "talking_first_loop.mp4",
+  "loopPreview": "talking_first_loop.gif"
+}

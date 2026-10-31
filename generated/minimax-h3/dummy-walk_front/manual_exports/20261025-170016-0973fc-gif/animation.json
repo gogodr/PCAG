@@ -1,0 +1,33 @@
+{
+  "animation": "Walk Front",
+  "source": "dummy-walk_front",
+  "fps": 12,
+  "frameWidth": 90,
+  "frameHeight": 160,
+  "frameCount": 15,
+  "sourceFrameIndices": [
+    2,
+    4,
+    6,
+    8,
+    10,
+    12,
+    14,
+    16,
+    18,
+    20,
+    22,
+    24,
+    26,
+    28,
+    30
+  ],
+  "backgroundRemoved": true,
+  "sourceCrop": [
+    54,
+    -26,
+    775,
+    1256
+  ],
+  "loop": true
+}

@@ -17,7 +17,7 @@ Own explicit startup/disposal for scenes, input listeners, timers, audio, and as
 
 Apply the [character and interaction specification](../../../planning/07-character-and-interactions.md). Render a visible protagonist with a feet anchor, facing, and idle/walk/talk mappings; click-to-walk is the standard exploration input. Present View as that character's observation, with readable attributed text and optional voice. Basic observation speech belongs in M1. Pick up/Use must not appear to execute remotely while the character is still approaching or unable to reach the target.
 
-1. Define room/world coordinates, camera transforms, scale, bounds, and hotspot hit precedence. Ensure editor-drawn shapes refer to the same coordinates the player uses at different viewport sizes.
+1. Define room/world coordinates, camera transforms, scale, bounds, and element hit precedence. Ensure editor-drawn shapes refer to the same coordinates the player uses at different viewport sizes.
 2. During M1, choose a constrained walkable representation and pathfinding approach supported by the editor. Record which obstacles, holes, or disconnected regions are supported; validate unsupported shapes instead of accepting data the runtime cannot navigate.
 3. Separate the clicked target, approach point, path, and queued action. Route around supported obstacles. If unreachable, report failure without changing puzzle state. Arrival reports completion to the core for prerequisite revalidation.
 4. Handle movement replacement and room teardown so canceled arrivals never fire old interactions. Define entrance placement and facing; reconstruct the room using durable core state.

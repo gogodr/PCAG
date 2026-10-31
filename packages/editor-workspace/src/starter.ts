@@ -12,9 +12,9 @@ export function starterWorkspace(name: string): Workspace {
   return {
     format: 'pcag-workspace', version: 1, targetWidth: 1600, targetHeight: 900,
     project: {
-      schemaVersion: 1, id: projectId, name, startRoomId: sceneId,
+      schemaVersion: 1, id: projectId, name, startRoomId: sceneId, gameState: {},
       assets: [{ id: backgroundId, name: 'Blank background', kind: 'image', path }],
-      rooms: [{ id: sceneId, name: 'Scene 1', width: 1600, height: 900, backgroundAssetId: backgroundId, hotspots: [] }],
+      rooms: [{ id: sceneId, name: 'Scene 1', width: 1600, height: 900, backgroundAssetId: backgroundId, elements: [], sceneState: {}, sceneManager: { events: [] } }],
     },
     folders: [...ROOT_FOLDERS],
     files: [{ id: backgroundId, path, mime: 'image/png', dataUrl: `data:image/png;base64,${blankPng}` }],

@@ -6,7 +6,7 @@ Date: 2026-10-22. Status: Accepted. User acceptance: 2026-10-23, request to star
 
 The creator saves a validated project JSON file and reopens one without changing stable IDs or authored data. Invalid files show diagnostics and leave the current draft intact. The creator exports a ZIP containing static player files, the edited project JSON, and its bundled sample image assets. After extraction, the player runs over a local HTTP server without the creator. It loads the exported JSON through the F03 parser and uses the F04 runtime.
 
-Acceptance scenarios: edit View text and background, save and reopen, preview the same content, export, serve the extracted folder over HTTP, click the hotspot, and see the edited text. Exporting invalid content is blocked. Repeated save/reopen does not alter IDs. Export remains limited to the bundled sample image assets in this spike; general import, backup/recovery, and hardened export belong to later backlog items.
+Acceptance scenarios: edit View text and background, save and reopen, preview the same content, export, serve the extracted folder over HTTP, click the element, and see the edited text. Exporting invalid content is blocked. Repeated save/reopen does not alter IDs. Export remains limited to the bundled sample image assets in this spike; general import, backup/recovery, and hardened export belong to later backlog items.
 
 Failure cases: malformed or unsupported project file, missing asset mapping, failed file fetch, corrupted ZIP, and exported player startup with invalid project content.
 
@@ -17,8 +17,8 @@ The [creator](../../apps/creator/src/main.tsx) downloads the validated draft as 
 | Check | Expected | Observed on 2026-10-22 |
 | --- | --- | --- |
 | `npm run check` | Build, format tests, and browser workflows pass | Passed: both production builds, 28 format tests, 14 Chromium browser tests across production and development. |
-| Browser save/reopen workflow | Edited text/background and stable hotspot ID survive JSON download/reopen; malformed file preserves current draft | Passed in both browser modes. |
-| Browser independent export workflow | Downloaded ZIP serves edited project over a separate HTTP server with no creator requests | Passed in both browser modes; View hotspot showed the edited text. |
+| Browser save/reopen workflow | Edited text/background and stable element ID survive JSON download/reopen; malformed file preserves current draft | Passed in both browser modes. |
+| Browser independent export workflow | Downloaded ZIP serves edited project over a separate HTTP server with no creator requests | Passed in both browser modes; View element showed the edited text. |
 | `tar -tf test-results/storage-export-save-reopen-fb469-and-independent-HTTP-export-chromium-production/pcag-player.zip` | System ZIP reader accepts the archive and lists player, project, and artwork | Passed; listed `index.html`, JS/CSS, `project.json`, and two image files. |
 | `git diff --check` | No whitespace errors | Passed. |
 
@@ -26,8 +26,8 @@ The bundle includes only the two bundled sample images. Reopened projects may co
 
 ## User review
 
-Run `npm run dev` and open <http://127.0.0.1:5173/>. Change the background to **Dawn landscape** and set View text to a phrase you recognize. Click **Save project**; change the text again, then click **Open project** and select the downloaded `project.json`. The saved text and background should return. Click **Preview room** and inspect the hotspot.
+Run `npm run dev` and open <http://127.0.0.1:5173/>. Change the background to **Dawn landscape** and set View text to a phrase you recognize. Click **Save project**; change the text again, then click **Open project** and select the downloaded `project.json`. The saved text and background should return. Click **Preview room** and inspect the element.
 
-Click **Export player ZIP**, extract `pcag-player.zip`, and serve the extracted directory over HTTP. For example, in that directory run `python -m http.server 8000`, then open <http://127.0.0.1:8000/>. The standalone player should display the selected background and show the saved View text when its hotspot is clicked. It does not need the creator server. Opening the HTML directly with a `file:` URL is not the supported path because the player fetches `project.json`.
+Click **Export player ZIP**, extract `pcag-player.zip`, and serve the extracted directory over HTTP. For example, in that directory run `python -m http.server 8000`, then open <http://127.0.0.1:8000/>. The standalone player should display the selected background and show the saved View text when its element is clicked. It does not need the creator server. Opening the HTML directly with a `file:` URL is not the supported path because the player fetches `project.json`.
 
-To check a failure case, open a malformed JSON file. The current draft should stay visible with a diagnostic. Setting the hotspot X to 1590 should disable Save, Preview, and Export until the geometry is repaired or undone.
+To check a failure case, open a malformed JSON file. The current draft should stay visible with a diagnostic. Setting the element X to 1590 should disable Save, Preview, and Export until the geometry is repaired or undone.

@@ -1,0 +1,108 @@
+{
+  "animation": "walk_front",
+  "image": "atlas.png",
+  "preview": "animation_90x160.gif",
+  "fps": 6,
+  "frameWidth": 90,
+  "frameHeight": 160,
+  "frameCount": 8,
+  "loop": true,
+  "sourceFrameIndices": [
+    0,
+    4,
+    9,
+    13,
+    17,
+    21,
+    26,
+    30
+  ],
+  "sourceCrop": [
+    53,
+    -26,
+    774,
+    1256
+  ],
+  "frames": [
+    {
+      "index": 0,
+      "file": "frames_90x160/frame_00.png",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 90,
+        "height": 160
+      }
+    },
+    {
+      "index": 1,
+      "file": "frames_90x160/frame_01.png",
+      "rect": {
+        "x": 90,
+        "y": 0,
+        "width": 90,
+        "height": 160
+      }
+    },
+    {
+      "index": 2,
+      "file": "frames_90x160/frame_02.png",
+      "rect": {
+        "x": 180,
+        "y": 0,
+        "width": 90,
+        "height": 160
+      }
+    },
+    {
+      "index": 3,
+      "file": "frames_90x160/frame_03.png",
+      "rect": {
+        "x": 270,
+        "y": 0,
+        "width": 90,
+        "height": 160
+      }
+    },
+    {
+      "index": 4,
+      "file": "frames_90x160/frame_04.png",
+      "rect": {
+        "x": 360,
+        "y": 0,
+        "width": 90,
+        "height": 160
+      }
+    },
+    {
+      "index": 5,
+      "file": "frames_90x160/frame_05.png",
+      "rect": {
+        "x": 450,
+        "y": 0,
+        "width": 90,
+        "height": 160
+      }
+    },
+    {
+      "index": 6,
+      "file": "frames_90x160/frame_06.png",
+      "rect": {
+        "x": 540,
+        "y": 0,
+        "width": 90,
+        "height": 160
+      }
+    },
+    {
+      "index": 7,
+      "file": "frames_90x160/frame_07.png",
+      "rect": {
+        "x": 630,
+        "y": 0,
+        "width": 90,
+        "height": 160
+      }
+    }
+  ]
+}

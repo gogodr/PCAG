@@ -1,0 +1,10 @@
+{
+  "jobId": "3d0f0c89-a725-4de3-972b-adbb63c508e0-u2",
+  "status": "COMPLETED",
+  "files": [
+    "dummy-throw-punch_0_00001-audio.webm"
+  ],
+  "texts": {
+    "Final prompt (QwenVL)": "The same 16-bit pixel-art animation dummy from the supplied first frame: blank cream oval head, segmented cream mannequin body and limbs, muted teal round joints, very dark plum pixel outlines. Preserve proportions, palette, all limbs and design in every frame. One full-body character only, fixed camera, consistent scale, no new objects or text, same flat dark mauve background. The first and last images are identical. Right-facing side profile. From guarded starting stance, wind up briefly, throw one clear straight punch toward screen right with one fist, rotate torso, then retract arm and recover to exactly starting guard. Feet remain in frame. No opponent, weapon or effects. One complete punch-and-recovery cycle.\n"
+  }
+}

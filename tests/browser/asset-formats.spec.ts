@@ -14,6 +14,12 @@ const audio = [
   { name: 'step.wav', mimeType: 'audio/wav', buffer: Buffer.from('RIFF0000WAVE') },
   { name: 'wind.ogg', mimeType: 'audio/ogg', buffer: Buffer.from('OggSsound') },
 ];
+const animation = [
+  { name: 'walk.mp4', mimeType: 'video/mp4', buffer: Buffer.from('0000ftypisom0000') },
+  { name: 'walk.webm', mimeType: 'video/webm', buffer: Buffer.concat([Buffer.from([0x1a, 0x45, 0xdf, 0xa3]), Buffer.from('webm')]) },
+  { name: 'walk.mov', mimeType: 'video/quicktime', buffer: Buffer.from('0000ftypqt  0000') },
+  { name: 'walk.gif', mimeType: 'image/gif', buffer: Buffer.from('R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=', 'base64') },
+];
 
 test('all supported formats import into roots and subfolders and reopen', async ({ page, baseURL }) => {
   if (!baseURL) throw new Error('Missing test baseURL.');
@@ -26,8 +32,8 @@ test('all supported formats import into roots and subfolders and reopen', async 
   await page.getByRole('button', { name: 'Select project folder' }).click();
   await page.getByRole('button', { name: 'Create project' }).click();
   await page.getByRole('button', { name: 'Assets', exact: true }).click();
-  for (const root of ['backgrounds', 'images', 'sounds', 'music']) {
-    const payloads = root === 'backgrounds' || root === 'images' ? images : audio;
+  for (const root of ['backgrounds', 'images', 'sounds', 'music', 'animation', 'video']) {
+    const payloads = root === 'backgrounds' || root === 'images' ? images : root === 'animation' || root === 'video' ? animation : audio;
     await page.getByRole('complementary', { name: 'Asset folders' }).getByRole('button', { name: root }).click();
     await page.getByRole('region', { name: 'Folder contents' }).click({ button: 'right', position: { x: 250, y: 350 } });
     await page.getByRole('menuitem', { name: 'Import files' }).click();
@@ -55,4 +61,8 @@ test('all supported formats import into roots and subfolders and reopen', async 
   await page.getByRole('button', { name: 'Assets', exact: true }).click();
   await page.getByRole('complementary', { name: 'Asset folders' }).getByRole('button', { name: 'images' }).click();
   await expect(page.getByRole('button', { name: 'vector.svg' })).toBeVisible();
+  await page.getByRole('complementary', { name: 'Asset folders' }).getByRole('button', { name: 'video' }).click();
+  await expect(page.getByRole('button', { name: 'walk.mp4' })).toBeVisible();
+  await page.getByRole('button', { name: 'walk.mp4' }).click();
+  await expect(page.getByRole('complementary', { name: 'Asset preview' }).locator('video[aria-label="walk.mp4"]')).toBeVisible();
 });

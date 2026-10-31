@@ -4,7 +4,7 @@ Date: 2026-10-22. Status: Accepted. User acceptance: 2026-10-22, "ok lets move f
 
 ## Scope and acceptance
 
-Define the smallest authored project needed by the M0 inspection slice: schema version, stable IDs, image asset declarations, rooms, rectangular hotspots, and `inspect` text. Keep it independent of React, Phaser, DOM, and storage. Load a maintained valid fixture through the validator in the application shells.
+Define the smallest authored project needed by the M0 inspection slice: schema version, stable IDs, image asset declarations, rooms, rectangular elements, and `inspect` text. Keep it independent of React, Phaser, DOM, and storage. Load a maintained valid fixture through the validator in the application shells.
 
 Acceptance scenarios:
 
@@ -32,4 +32,4 @@ The first `npm run check` attempt passed type checking but its Vite build could 
 
 ## User review
 
-Run `npm run review:format` to see the valid room load. Run `npm run review:format -- tests/fixtures/missing-background.json` to see the field-level diagnostic (exit code 1 is expected). For the visual check, run `npm run dev` and `npm run dev:player` in separate terminals: the creator reports the sample project and the player displays the sample room. F04 will add editing and hotspot interaction after F03 acceptance.
+Run `npm run review:format` to see the valid room load. Run `npm run review:format -- tests/fixtures/missing-background.json` to see the field-level diagnostic (exit code 1 is expected). For the visual check, run `npm run dev` and `npm run dev:player` in separate terminals: the creator reports the sample project and the player displays the sample room. F04 will add editing and element interaction after F03 acceptance.

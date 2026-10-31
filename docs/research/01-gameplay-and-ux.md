@@ -38,7 +38,7 @@ The following is our synthesis of the reference patterns and the recurring syste
 | --- | --- | --- |
 | Rooms and exploration | Visit locations and move between them | Room definitions, exits, transitions, spawn positions, camera limits |
 | Character movement | Click to walk; approach an object before acting | Walkable regions, paths, approach points, facing, unreachable feedback |
-| Hotspots | Discover and identify interactive scenery or people | Hit regions, labels, priority for overlapping objects, enabled state |
+| Elements | Discover and identify interactive scenery or people | Hit regions, labels, priority for overlapping objects, enabled state |
 | Actions | Inspect, operate, pick up, talk, give, or use an item | Shared action identifiers, validation, execution, and fallback responses |
 | Inventory | Collect, inspect, select, use, and lose items | Ownership, stable item IDs, selection, item state, deterministic ordering |
 | Item combinations | Use one possession with another | Authored combination rules, prerequisites, consumption, resulting items |
@@ -67,7 +67,7 @@ Recommendation: ship one consistent default interface first. Theme colors, fonts
 Updated 2026-10-22: the [classic-actions reference review](03-classic-actions-and-controls.md) and [player UI requirements](../planning/08-player-actions-and-ui.md) select a visible verb bar, command sentence, and inventory as the initial desktop default.
 
 1. Clicking walkable empty space moves the protagonist.
-2. Hover or keyboard focus identifies a hotspot and previews its primary action.
+2. Hover or keyboard focus identifies an element and previews its primary action.
 3. Select an explicit verb, then primary-click its target. Default Walk mode moves toward a scene target without operating it. Physical actions first approach, revalidate, and then execute; unreachable targets produce feedback without effects.
 4. View is an explicit verb and does not require walking by default: the protagonist delivers an attributed observation. In Walk mode, secondary click invokes the object's displayed suggested action; while composing a command, it cancels. Both operations have visible controls.
 5. Inventory uses a consistent panel. Click an item to select it, then click its target. Dragging can be an additional shortcut, never the only method.
@@ -83,8 +83,8 @@ The classic verb bar is now the selected implementation default to validate. Ope
 ## Quality-of-life proposals
 
 - Adjustable subtitle size and speed, clear speaker identification, and separate audio levels.
-- Keyboard focus and activation for hotspots, inventory, and dialogue.
-- Optional hotspot reveal; avoid requiring pixel hunting.
+- Keyboard focus and activation for elements, inventory, and dialogue.
+- Optional element reveal; avoid requiring pixel hunting.
 - No essential information available only through color, hover, or sound.
 - Skippable presentation with the same resulting game state as normal playback.
 - Manual saves plus autosaves at safe boundaries.
@@ -98,4 +98,4 @@ Multiple protagonists, time travel, journals, hint systems, timed puzzles, death
 
 ## Next research step
 
-Play a small, comparable segment of each reference and record: discovering a hotspot, inspecting, taking an item, using it in the room, combining items, selecting dialogue, canceling, and saving/loading. Record the exact edition, inputs, feedback, and exceptions. This will validate the proposed UX before implementation.
+Play a small, comparable segment of each reference and record: discovering an element, inspecting, taking an item, using it in the room, combining items, selecting dialogue, canceling, and saving/loading. Record the exact edition, inputs, feedback, and exceptions. This will validate the proposed UX before implementation.
