@@ -67,15 +67,14 @@ export function StateVariablesInspector({ scope, roomId, rooms, variables, edit,
     if (referenced) { setMessage(`Remove the ${scope === 'game' ? 'GameState' : 'SceneState'} event trigger for ${name} before deleting this variable.`); return; }
     update(current => { delete current[name]; });
   };
-  return <>
-    <h3>{scope === 'game' ? 'GameState' : 'SceneState'}</h3>
-    <p className="subtle">{scope === 'game' ? 'These variables are shared by every scene.' : 'These variables belong to this scene.'} Value can be edited here; default value starts a new game.</p>
+  return <div className="state-inspector">
+    <div className="state-inspector-toolbar"><div><h3>Variables</h3><p className="subtle">{scope === 'game' ? 'Shared by every scene.' : 'Available in this scene.'} Value is editable here; default value starts a new game.</p></div><button type="button" onClick={add}>Add variable</button></div>
     <div className="state-variables">
       {Object.entries(variables).map(([name, value]) => <VariableRow key={name} name={name} value={value}
         rename={nextName => rename(name, nextName)}
         change={nextValue => update(current => { current[name] = { ...current[name]!, ...nextValue }; })}
         remove={() => remove(name)} />)}
     </div>
-    <button type="button" onClick={add}>Add variable</button>
-  </>;
+    {Object.keys(variables).length === 0 && <p className="state-inspector-empty">No variables yet. Add one to use it in scene scripts.</p>}
+  </div>;
 }

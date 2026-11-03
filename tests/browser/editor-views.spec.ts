@@ -1,9 +1,117 @@
 import { readFile } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
 import { expect, test } from '@playwright/test';
 import { readWorkspaceArchive, writeWorkspaceArchive } from './workspace-archive';
 import { installFolderPicker } from './folder-picker';
 
 const pixel = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/lZkAAAAASUVORK5CYII=', 'base64');
+
+test('Play scene opens the selected scene in a separate game window', async ({ page, baseURL }) => {
+  if (!baseURL) throw new Error('Missing test baseURL.');
+  await page.goto(baseURL);
+  await page.getByRole('button', { name: 'Scenes', exact: true }).click();
+  await page.getByRole('button', { name: 'Add element' }).click();
+  await page.getByRole('menuitem', { name: 'Box element' }).click();
+  await page.getByLabel('Rename element').press('Enter');
+  const box = await page.getByRole('button', { name: 'Select element Element', exact: true }).boundingBox();
+  const scene = await page.locator('.scene-canvas .layout').boundingBox();
+  if (!box || !scene) throw new Error('Scene geometry unavailable.');
+  const x = (box.x + box.width / 2 - scene.x) / scene.width;
+  const y = (box.y + box.height / 2 - scene.y) / scene.height;
+  const opened = page.waitForEvent('popup');
+  await page.getByRole('button', { name: 'Play scene' }).click();
+  const popup = await opened;
+  await expect(popup.getByText('Game view ready.')).toBeVisible();
+  await expect(popup.locator('.preview-loading-cover')).toHaveCSS('opacity', '0');
+  await expect(popup.locator('.preview-loading-cover')).toHaveCSS('background-color', 'rgba(0, 0, 0, 0.8)');
+  await expect(popup.locator('.preview-loading-cover')).toBeEmpty();
+  await expect(popup.getByRole('checkbox', { name: 'Debug walk path' })).toBeVisible();
+  await expect(page.getByRole('tree', { name: 'Scene element tree' })).toBeVisible();
+  const canvas = await popup.locator('.preview-stage canvas').boundingBox();
+  if (!canvas) throw new Error('Game window canvas unavailable.');
+  await popup.mouse.click(canvas.x + canvas.width * x, canvas.y + canvas.height * y);
+  await expect(popup.getByText('You see Element.')).toBeVisible();
+  await popup.getByRole('button', { name: 'Close preview' }).click();
+  await expect.poll(() => popup.isClosed()).toBe(true);
+});
+
+test('player cursor defaults to View, cycles enabled actions, and fires the chosen action', async ({ page, baseURL }) => {
+  if (!baseURL) throw new Error('Missing test baseURL.');
+  await page.goto(baseURL);
+  await page.getByRole('button', { name: 'Scenes', exact: true }).click();
+  await page.getByRole('button', { name: 'Add element' }).click();
+  await page.getByRole('menuitem', { name: 'Box element' }).click();
+  await page.getByLabel('Rename element').fill('test_poster');
+  await page.getByLabel('Rename element').press('Enter');
+  await page.getByLabel('Element name').fill('Test Poster');
+  await page.getByLabel('Available action Move to').check();
+  await page.getByLabel('Available action Use').check();
+  await page.getByRole('button', { name: 'Add element' }).click();
+  await page.getByRole('menuitem', { name: 'Box element' }).click();
+  await page.getByLabel('Rename element').fill('path_mark');
+  await page.getByLabel('Rename element').press('Enter');
+  await page.getByLabel('Element name').fill('path_mark');
+  await page.getByLabel('Available action View').uncheck();
+  await page.getByLabel('Available action Move to').check();
+  await page.getByLabel('Available action Open').check();
+  await page.getByLabel('Element x').fill('100');
+  await page.getByLabel('Element y').fill('100');
+  await page.getByRole('button', { name: 'Add element' }).click();
+  await page.getByRole('menuitem', { name: 'Box element' }).click();
+  await page.getByLabel('Rename element').fill('crate');
+  await page.getByLabel('Rename element').press('Enter');
+  await page.getByLabel('Element name').fill('crate');
+  await page.getByLabel('Available action View').uncheck();
+  await page.getByLabel('Available action Push').check();
+  await page.getByLabel('Element x').fill('1300');
+  await page.getByLabel('Element y').fill('100');
+  const box = await page.getByRole('button', { name: 'Select element Test Poster' }).boundingBox();
+  const pathMark = await page.getByRole('button', { name: 'Select element path_mark' }).boundingBox();
+  const crate = await page.getByRole('button', { name: 'Select element crate' }).boundingBox();
+  const scene = await page.locator('.scene-canvas .layout').boundingBox();
+  if (!box || !pathMark || !crate || !scene) throw new Error('Scene geometry unavailable.');
+  const x = (box.x + box.width / 2 - scene.x) / scene.width;
+  const y = (box.y + box.height / 2 - scene.y) / scene.height;
+  const pathX = (pathMark.x + pathMark.width / 2 - scene.x) / scene.width;
+  const pathY = (pathMark.y + pathMark.height / 2 - scene.y) / scene.height;
+  const crateX = (crate.x + crate.width / 2 - scene.x) / scene.width;
+  const crateY = (crate.y + crate.height / 2 - scene.y) / scene.height;
+  await page.getByRole('treeitem', { name: 'SceneManager' }).click();
+  await page.getByRole('button', { name: 'Add Event' }).click();
+  await page.getByLabel('Trigger 1').getByLabel('Trigger type').selectOption('player_action');
+  await page.getByLabel('Trigger 1').getByLabel('Player action').selectOption('use');
+  await page.getByRole('button', { name: 'Edit Script' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Script for Event 1' });
+  const signature = await dialog.locator('.scene-script-header code').first().textContent();
+  const functionName = signature?.split('(')[0];
+  if (!functionName) throw new Error('Script function name missing.');
+  await dialog.locator('.monaco-editor').click();
+  await page.keyboard.press('ControlOrMeta+A');
+  await page.keyboard.insertText(`function ${functionName}(scene, game, trigger) { scene.elements["test_poster"].disabled = true; }`);
+  await dialog.getByRole('button', { name: 'Save Script' }).click();
+  const opened = page.waitForEvent('popup');
+  await page.getByRole('button', { name: 'Play scene' }).click();
+  const player = await opened;
+  await expect(player.getByText('Game view ready.')).toBeVisible();
+  const canvas = player.locator('.preview-stage canvas');
+  const bounds = await canvas.boundingBox();
+  if (!bounds) throw new Error('Player canvas unavailable.');
+  await player.mouse.move(bounds.x + bounds.width * pathX, bounds.y + bounds.height * pathY);
+  await expect(player.locator('.action-hint')).toHaveText('Move to path_mark');
+  await player.mouse.move(bounds.x + bounds.width * crateX, bounds.y + bounds.height * crateY);
+  await expect(player.locator('.action-hint')).toHaveText('Push crate');
+  await player.mouse.move(bounds.x + bounds.width * x, bounds.y + bounds.height * y);
+  await expect(player.locator('.action-hint')).toHaveText('View Test Poster');
+  await expect.poll(() => canvas.evaluate(element => getComputedStyle(element).cursor)).toContain('data:image/png');
+  await player.mouse.wheel(0, 300);
+  await expect(player.locator('.action-hint')).toHaveText('Move to Test Poster');
+  await player.waitForTimeout(140);
+  await player.mouse.wheel(0, 300);
+  await expect(player.locator('.action-hint')).toHaveText('Use Test Poster');
+  await player.mouse.click(bounds.x + bounds.width * x, bounds.y + bounds.height * y);
+  await expect(player.locator('.action-hint')).toHaveText('Move to here');
+  await player.getByRole('button', { name: 'Close preview' }).click();
+});
 
 test('SceneManager authors OR triggers and runs a Monaco scene-load script', async ({ page, baseURL }) => {
   if (!baseURL) throw new Error('Missing test baseURL.');
@@ -62,6 +170,28 @@ test('SceneManager authors OR triggers and runs a Monaco scene-load script', asy
   await expect(page.getByText('You see Element.')).toHaveCount(0);
 });
 
+test('SceneManager compacts events and authors Character position triggers', async ({ page, baseURL }) => {
+  if (!baseURL) throw new Error('Missing test baseURL.');
+  await page.goto(baseURL);
+  await page.getByRole('button', { name: 'Scenes', exact: true }).click();
+  await page.getByRole('treeitem', { name: 'SceneManager' }).click();
+  await page.getByRole('button', { name: 'Add Event' }).click();
+  const first = page.locator('.scene-event-card').first();
+  await first.getByLabel('Trigger type').selectOption('character_position');
+  await expect(first.locator('.scene-position-warning')).toContainText('Keep this handler light');
+  await page.getByRole('button', { name: 'Add Event' }).click();
+  await expect(first.getByLabel('Trigger type')).toHaveCount(0);
+  await expect(page.locator('.scene-event-card').nth(1).getByLabel('Trigger type')).toBeVisible();
+  await first.getByRole('button', { name: 'Expand Event 1' }).click();
+  await expect(first.getByLabel('Trigger type')).toHaveValue('character_position');
+  const download = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Project', exact: true }).click();
+  await page.getByRole('button', { name: 'Export project' }).click();
+  const exported = readWorkspaceArchive(await readFile(await (await download).path()));
+  expect(exported.project.rooms[0].sceneManager.events[0].triggers).toEqual([{ kind: 'character_position' }]);
+  expect(exported.project.rooms[0].sceneManager.events[0].script).toContain('Keep this handler light');
+});
+
 test('scene and game variable changes chain events with old and new values', async ({ page, baseURL }) => {
   if (!baseURL) throw new Error('Missing test baseURL.');
   await page.goto(baseURL);
@@ -70,6 +200,7 @@ test('scene and game variable changes chain events with old and new values', asy
   await page.getByRole('menuitem', { name: 'Box element' }).click();
   await page.getByLabel('Rename element').fill('Door');
   await page.getByLabel('Rename element').press('Enter');
+  await page.getByLabel('Element name').fill('Door');
   const authoredBounds = await page.getByRole('button', { name: 'Select element Door' }).boundingBox();
   const canvas = await page.locator('.scene-canvas').boundingBox();
   if (!authoredBounds || !canvas) throw new Error('Scene geometry unavailable.');
@@ -136,6 +267,7 @@ test('scene and game variable changes chain events with old and new values', asy
   await page.getByLabel('Variable name').fill('doorOpened');
   await page.getByLabel('Variable name').press('Enter');
   await tree.getByRole('treeitem', { name: 'SceneManager' }).click();
+  await page.locator('.scene-event-card').nth(1).getByRole('button', { name: 'Expand Event 2' }).click();
   await expect(page.locator('.scene-event-card').nth(1).getByLabel('State variable')).toHaveValue('doorOpened');
   await tree.getByRole('treeitem', { name: 'SceneState' }).click();
   await page.getByRole('group', { name: 'Variable doorOpened' }).getByRole('button', { name: 'Remove doorOpened' }).click();
@@ -144,6 +276,7 @@ test('scene and game variable changes chain events with old and new values', asy
   await page.getByLabel('Variable name').fill('points');
   await page.getByLabel('Variable name').press('Enter');
   await tree.getByRole('treeitem', { name: 'SceneManager' }).click();
+  await page.locator('.scene-event-card').nth(2).getByRole('button', { name: 'Expand Event 3' }).click();
   await expect(page.locator('.scene-event-card').nth(2).getByLabel('State variable')).toHaveValue('points');
 });
 
@@ -189,7 +322,7 @@ test('script editor theme and completions follow scene and game state', async ({
   await expect(editor.locator('.view-line').nth(6)).toContainText('scene.elements["Door Panel"]');
 });
 
-test('element names stay controlled while editing in inspector and elements', async ({ page, baseURL }) => {
+test('element IDs and display names edit independently without uncontrolled inputs', async ({ page, baseURL }) => {
   if (!baseURL) throw new Error('Missing test baseURL.');
   const warnings: string[] = [];
   page.on('console', message => { if (message.type() === 'error') warnings.push(message.text()); });
@@ -198,17 +331,19 @@ test('element names stay controlled while editing in inspector and elements', as
   await page.getByRole('button', { name: 'Scenes', exact: true }).click();
   await page.getByRole('button', { name: 'Add element' }).click();
   await page.getByRole('menuitem', { name: 'Box element' }).click();
-  await page.getByLabel('Rename element').fill('First name');
+  await page.getByLabel('Rename element').fill('First ID');
   await page.getByLabel('Rename element').press('Enter');
+  await expect(page.getByLabel('Element ID')).toHaveValue('First ID');
   await page.getByLabel('Element name').fill('');
   await page.getByLabel('Element name').pressSequentially('Second name');
   await expect(page.getByLabel('Element name')).toHaveValue('Second name');
-  const row = page.getByRole('tree', { name: 'Scene element tree' }).getByRole('treeitem', { name: 'Second name' });
+  const row = page.getByRole('tree', { name: 'Scene element tree' }).getByRole('treeitem', { name: 'First ID' });
   await row.click({ button: 'right' });
   await page.getByRole('menuitem', { name: 'Rename' }).click();
-  await page.getByLabel('Rename element').fill('Third name');
+  await page.getByLabel('Rename element').fill('Third ID');
   await page.getByLabel('Rename element').press('Enter');
-  await expect(page.getByLabel('Element name')).toHaveValue('Third name');
+  await expect(page.getByLabel('Element ID')).toHaveValue('Third ID');
+  await expect(page.getByLabel('Element name')).toHaveValue('Second name');
   expect(warnings.filter(message => /controlled input|uncontrolled input|TypeError/.test(message))).toEqual([]);
 });
 
@@ -228,13 +363,13 @@ test('element rows drag to reorder canvas stacking and saved order', async ({ pa
   const secondRow = tree.getByRole('treeitem', { name: 'Element 2' });
   const firstCanvas = page.getByRole('button', { name: 'Select element Element', exact: true });
   const secondCanvas = page.getByRole('button', { name: 'Select element Element 2' });
-  await expect(tree.getByRole('treeitem')).toHaveText(['Element 2', 'Element', 'SceneState', 'GameState', 'SceneManager', 'Background']);
-  await expect(firstCanvas).toHaveCSS('z-index', '1');
-  await expect(secondCanvas).toHaveCSS('z-index', '2');
-  await firstRow.dragTo(secondRow, { targetPosition: { x: 35, y: 4 } });
-  await expect(tree.getByRole('treeitem')).toHaveText(['Element', 'Element 2', 'SceneState', 'GameState', 'SceneManager', 'Background']);
+  await expect(tree.getByRole('treeitem')).toHaveText(['Element 2', 'Element', 'Player', 'SceneState', 'GameState', 'SceneManager', 'Walkable Area', 'Background']);
   await expect(firstCanvas).toHaveCSS('z-index', '2');
-  await expect(secondCanvas).toHaveCSS('z-index', '1');
+  await expect(secondCanvas).toHaveCSS('z-index', '3');
+  await firstRow.dragTo(secondRow, { targetPosition: { x: 35, y: 4 } });
+  await expect(tree.getByRole('treeitem')).toHaveText(['Element', 'Element 2', 'Player', 'SceneState', 'GameState', 'SceneManager', 'Walkable Area', 'Background']);
+  await expect(firstCanvas).toHaveCSS('z-index', '3');
+  await expect(secondCanvas).toHaveCSS('z-index', '2');
   const bounds = await firstCanvas.boundingBox();
   if (!bounds) throw new Error('Canvas element bounds are unavailable.');
   const top = await page.evaluate(({ x, y }) => document.elementFromPoint(x, y)?.closest('[data-scene-element]')?.getAttribute('aria-label'), { x: bounds.x + bounds.width / 2, y: bounds.y + bounds.height / 2 });
@@ -265,12 +400,14 @@ test('element row controls persist enabled, visible, and locked states', async (
   await controls.getByRole('button', { name: 'Show Element' }).click();
   await expect(canvasElement).toBeVisible();
   await controls.getByRole('button', { name: 'Lock Element' }).click();
-  await expect(page.getByLabel('Element x')).toBeDisabled();
-  await expect(tree.getByRole('treeitem', { name: 'Element' })).toHaveAttribute('draggable', 'false');
+  await expect(page.getByLabel('Element x')).toBeEnabled();
+  await page.getByLabel('Element x').fill('120');
+  await expect(page.getByLabel('Element x')).toHaveValue('120');
+  await expect(tree.getByRole('treeitem', { name: 'Element' })).toHaveAttribute('draggable', 'true');
   await expect(canvasElement).toHaveCount(0);
   await expect(tree.getByRole('treeitem', { name: 'Element' })).toBeVisible();
   await tree.getByRole('treeitem', { name: 'Element' }).click({ button: 'right' });
-  await expect(page.getByRole('menuitem', { name: 'Delete' })).toBeDisabled();
+  await expect(page.getByRole('menuitem', { name: 'Delete' })).toBeEnabled();
   await controls.getByRole('button', { name: 'Unlock Element' }).click();
   await expect(page.getByLabel('Element x')).toBeEnabled();
   await expect(canvasElement).toBeVisible();
@@ -281,6 +418,24 @@ test('element row controls persist enabled, visible, and locked states', async (
   await page.getByRole('button', { name: 'Export project' }).click();
   const exported = readWorkspaceArchive(await readFile(await (await download).path()));
   expect(exported.project.rooms[0].elements.at(-1)).toMatchObject({ enabled: false, visible: false, locked: true });
+});
+
+test('locked canvas element lets a click reach the element beneath it', async ({ page, baseURL }) => {
+  if (!baseURL) throw new Error('Missing test baseURL.');
+  await page.goto(baseURL);
+  await page.getByRole('button', { name: 'Scenes', exact: true }).click();
+  for (let index = 0; index < 2; index++) {
+    await page.getByRole('button', { name: 'Add element' }).click();
+    await page.getByRole('menuitem', { name: 'Box element' }).click();
+    await page.getByLabel('Rename element').press('Enter');
+  }
+  const top = page.getByRole('button', { name: 'Select element Element 2' });
+  const bounds = await top.boundingBox();
+  if (!bounds) throw new Error('Top element unavailable.');
+  await page.getByRole('button', { name: 'Lock Element 2' }).click();
+  await expect(top).toHaveCount(0);
+  await page.mouse.click(bounds.x + 10, bounds.y + 10);
+  await expect(page.getByRole('treeitem', { name: 'Element', exact: true })).toHaveAttribute('aria-selected', 'true');
 });
 
 test('scene background zooms and pans while elements block those gestures', async ({ page, baseURL }) => {
@@ -298,22 +453,32 @@ test('scene background zooms and pans while elements block those gestures', asyn
   if (!viewport) throw new Error('Scene viewport is unavailable.');
   const x = viewport.x + viewport.width * .15;
   const y = viewport.y + viewport.height * .15;
+  const coordinates = page.getByRole('group', { name: 'Scene cursor coordinates' });
+  await page.mouse.move(x, y);
+  await expect(coordinates).toContainText(`X: ${Math.round(1600 * .15)}  Y: ${Math.round(900 * .15)}`);
   await page.mouse.click(x, y);
   await expect(tree.getByRole('treeitem', { name: 'Element' })).toHaveAttribute('aria-selected', 'true');
   await tree.getByRole('treeitem', { name: 'SceneState' }).click();
   await expect(element).not.toHaveClass(/selected/);
   await expect(element).toHaveCSS('border-top-color', 'rgb(121, 195, 188)');
   await element.hover();
+  await expect(coordinates).toContainText(/X: \d+  Y: \d+/);
   await page.mouse.wheel(0, -240);
   await expect(page.getByLabel('Scene zoom')).toHaveText('100%');
   await page.mouse.move(x, y);
   await page.mouse.wheel(0, -240);
   await expect(page.getByLabel('Scene zoom')).toHaveText('115%');
+  const zoomCoordinates = await coordinates.locator('code').textContent();
+  const zoomY = Number(zoomCoordinates?.match(/Y: (\d+)/)?.[1]);
+  expect(Math.abs(zoomY - Math.round(900 * .15))).toBeLessThanOrEqual(5);
   const zoomed = await transform();
   await page.mouse.down();
   await page.mouse.move(x - 35, y - 25, { steps: 4 });
   await page.mouse.up();
   expect(await transform()).not.toBe(zoomed);
+  await page.mouse.move(x, y);
+  const panCoordinates = await coordinates.locator('code').textContent();
+  expect(Number(panCoordinates?.match(/X: (\d+)/)?.[1])).toBeGreaterThan(Math.round(1600 * .15));
   await expect(tree.getByRole('treeitem', { name: 'SceneState' })).toHaveAttribute('aria-selected', 'true');
   const panned = await transform();
   await element.hover();
@@ -328,6 +493,8 @@ test('scene background zooms and pans while elements block those gestures', asyn
   await element.click();
   await page.mouse.click(x, y);
   await expect(tree.getByRole('treeitem', { name: 'Element' })).toHaveAttribute('aria-selected', 'true');
+  await page.mouse.move(viewport.x + viewport.width + 5, y);
+  await expect(coordinates).toContainText('X: —  Y: —');
 });
 
 test('only a selected element drags, and its position is one undoable edit', async ({ page, baseURL }) => {
@@ -354,6 +521,7 @@ test('only a selected element drags, and its position is one undoable edit', asy
   await expect(page.getByLabel('Element x')).toHaveValue('720');
   await expect(page.getByLabel('Element y')).toHaveValue('400');
   await drag(45, 25);
+  expect(await page.evaluate(() => window.getSelection()?.toString())).toBe('');
   const movedX = await page.getByLabel('Element x').inputValue();
   expect(Number(movedX)).toBeGreaterThan(720);
   expect(Number(await page.getByLabel('Element y').inputValue())).toBeGreaterThan(400);
@@ -430,6 +598,307 @@ test('shape vertices can be inserted, moved, and removed on the canvas', async (
   await expect(page.getByText('You see Element.')).toBeVisible();
 });
 
+test('element available actions edit independently and export', async ({ page, baseURL }) => {
+  if (!baseURL) throw new Error('Missing test baseURL.');
+  await page.goto(baseURL);
+  await page.getByRole('button', { name: 'Scenes', exact: true }).click();
+  await page.getByRole('button', { name: 'Add element' }).click();
+  await page.getByRole('menuitem', { name: 'Box element' }).click();
+  await page.getByLabel('Rename element').press('Enter');
+  const actions = page.getByRole('region', { name: 'Available Actions' });
+  await expect(actions.getByLabel('Available action View')).toBeChecked();
+  await actions.getByLabel('Available action Open').check();
+  await actions.getByLabel('Available action Use').check();
+  await actions.getByLabel('Available action View').uncheck();
+  await expect(actions.getByLabel('Available action Open')).toBeChecked();
+  await expect(actions.getByLabel('Available action Use')).toBeChecked();
+  await page.getByRole('button', { name: 'Project', exact: true }).click();
+  const download = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Export project' }).click();
+  const exported = readWorkspaceArchive(await readFile(await (await download).path()));
+  expect(exported.project.rooms[0].elements.at(-1).availableActions).toEqual(['open', 'use']);
+});
+
+test('Player layering and Walkable Area authoring export with the scene', async ({ page, baseURL }) => {
+  if (!baseURL) throw new Error('Missing test baseURL.');
+  await page.goto(baseURL);
+  await page.getByRole('button', { name: 'Scenes', exact: true }).click();
+  const tree = page.getByRole('tree', { name: 'Scene element tree' });
+  const player = tree.getByRole('treeitem', { name: 'Player' });
+  await expect(player).toBeVisible();
+  await expect(tree.getByRole('treeitem', { name: 'Walkable Area' })).toBeVisible();
+  await expect(page.getByRole('group', { name: 'Player controls' }).getByRole('button', { name: 'Lock Player' })).toBeVisible();
+  await player.click();
+  await page.getByLabel('Player initial X').fill('300');
+  await page.getByLabel('Player initial Y').fill('700');
+  await page.getByLabel('Player scale').fill('1.25');
+  await page.getByLabel('Player anchor X').fill('0.25');
+  await page.getByLabel('Player anchor Y').fill('0.75');
+  await expect(page.getByRole('button', { name: 'Select Player' })).toHaveAttribute('style', /translate\(-25%, -75%\)/);
+  await page.getByRole('button', { name: 'Add element' }).click();
+  await page.getByRole('menuitem', { name: 'Box element' }).click();
+  await page.getByLabel('Rename element').press('Enter');
+  await player.dragTo(tree.getByRole('treeitem', { name: 'Element', exact: true }), { targetPosition: { x: 30, y: 3 } });
+  await expect(tree.getByRole('treeitem').first()).toHaveText('Player');
+  await tree.getByRole('treeitem', { name: 'Walkable Area' }).click();
+  const wrongMask = await page.evaluate(() => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 1; canvas.height = 1;
+    canvas.getContext('2d')!.fillRect(0, 0, 1, 1);
+    return canvas.toDataURL('image/png').split(',')[1]!;
+  });
+  await page.getByLabel('Walkable Area file').setInputFiles({ name: 'wrong.png', mimeType: 'image/png', buffer: Buffer.from(wrongMask, 'base64') });
+  await expect(page.getByRole('alert')).toContainText('exactly 1376 × 768');
+  const fullMask = await page.evaluate(() => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 1376; canvas.height = 768;
+    const context = canvas.getContext('2d')!;
+    context.fillStyle = '#808080'; context.fillRect(0, 0, 1376, 768);
+    return canvas.toDataURL('image/png').split(',')[1]!;
+  });
+  await page.getByLabel('Walkable Area file').setInputFiles({ name: 'walkable.png', mimeType: 'image/png', buffer: Buffer.from(fullMask, 'base64') });
+  await expect(page.getByText('walkable.png')).toBeVisible();
+  const walkablePreview = page.locator('.walkable-inspector-preview');
+  const previewBackground = walkablePreview.getByRole('img', { name: 'Scene background preview' });
+  const previewMask = walkablePreview.getByRole('img', { name: 'Walkable Area mask preview' });
+  await expect(previewBackground).toBeVisible();
+  await expect(previewMask).toBeVisible();
+  const backgroundBounds = await previewBackground.boundingBox();
+  const maskBounds = await previewMask.boundingBox();
+  expect(maskBounds).toEqual(backgroundBounds);
+  await expect(previewMask).toHaveCSS('opacity', '1');
+  await page.getByLabel('Walkable min scale').fill('0.7');
+  await page.getByLabel('Walkable max scale').fill('1.3');
+  await page.getByRole('button', { name: 'Project', exact: true }).click();
+  const download = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Export project' }).click();
+  const exported = readWorkspaceArchive(await readFile(await (await download).path()));
+  expect(exported.project.rooms[0].player).toMatchObject({ position: { x: 300, y: 700 }, anchor: { x: 0.25, y: 0.75 }, scale: 1.25, layer: 1 });
+  expect(exported.project.rooms[0].walkableArea).toEqual({ path: 'images/walkable.png', minScale: 0.7, maxScale: 1.3 });
+});
+
+test('locked Player is click-through on the canvas and editable in the inspector', async ({ page, baseURL }) => {
+  if (!baseURL) throw new Error('Missing test baseURL.');
+  await page.goto(baseURL);
+  await page.getByRole('button', { name: 'Scenes', exact: true }).click();
+  await page.getByRole('treeitem', { name: 'Player' }).click();
+  const marker = page.getByRole('button', { name: 'Select Player' });
+  const bounds = await marker.boundingBox();
+  if (!bounds) throw new Error('Player marker unavailable.');
+  const initialX = await page.getByLabel('Player initial X').inputValue();
+  const initialY = await page.getByLabel('Player initial Y').inputValue();
+  const controls = page.getByRole('group', { name: 'Player controls' });
+  await controls.getByRole('button', { name: 'Lock Player' }).click();
+  await expect(marker).toHaveCSS('pointer-events', 'none');
+  await expect(marker).toHaveCSS('border-top-color', 'rgba(0, 0, 0, 0)');
+  await expect(marker.locator('.scene-player-anchor')).toHaveCount(0);
+  await page.mouse.move(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(bounds.x + bounds.width / 2 + 40, bounds.y + bounds.height / 2 + 20, { steps: 4 });
+  await page.mouse.up();
+  await expect(page.getByLabel('Player initial X')).toHaveValue(initialX);
+  await expect(page.getByLabel('Player initial Y')).toHaveValue(initialY);
+  await page.getByLabel('Player initial X').fill('300');
+  await expect(page.getByLabel('Player initial X')).toHaveValue('300');
+  const download = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Project', exact: true }).click();
+  await page.getByRole('button', { name: 'Export project' }).click();
+  const exported = readWorkspaceArchive(await readFile(await (await download).path()));
+  expect(exported.project.rooms[0].player).toMatchObject({ locked: true, position: { x: 300 } });
+  await page.getByRole('button', { name: 'Scenes', exact: true }).click();
+  await controls.getByRole('button', { name: 'Unlock Player' }).click();
+  await expect(marker).toHaveCSS('pointer-events', 'auto');
+});
+
+test('selected Player marker stays anchored while dragging its initial position', async ({ page, baseURL }) => {
+  if (!baseURL) throw new Error('Missing test baseURL.');
+  await page.goto(baseURL);
+  await page.getByRole('button', { name: 'Scenes', exact: true }).click();
+  await page.getByRole('treeitem', { name: 'Player' }).click();
+  const marker = page.getByRole('button', { name: 'Select Player' });
+  const initial = await marker.boundingBox();
+  const viewport = await page.locator('.scene-canvas-viewport').boundingBox();
+  if (!initial || !viewport) throw new Error('Player marker or scene viewport unavailable.');
+  const initialX = Number(await page.getByLabel('Player initial X').inputValue());
+  const initialY = Number(await page.getByLabel('Player initial Y').inputValue());
+  const pointer = { x: initial.x + initial.width / 2, y: initial.y + initial.height / 2 };
+  await page.mouse.move(pointer.x, pointer.y);
+  const hovered = await marker.boundingBox();
+  expect(Math.abs(hovered!.x - initial.x)).toBeLessThan(2);
+  expect(Math.abs(hovered!.y - initial.y)).toBeLessThan(2);
+  await page.mouse.down();
+  const pressed = await marker.boundingBox();
+  expect(Math.abs(pressed!.x - initial.x)).toBeLessThan(2);
+  expect(Math.abs(pressed!.y - initial.y)).toBeLessThan(2);
+  await page.mouse.move(pointer.x + 44, pointer.y + 22, { steps: 5 });
+  const dragging = await marker.boundingBox();
+  expect(Math.abs(dragging!.x - initial.x - 44)).toBeLessThan(3);
+  expect(Math.abs(dragging!.y - initial.y - 22)).toBeLessThan(3);
+  await page.mouse.up();
+  await expect(page.getByLabel('Player initial X')).toHaveValue(String(Math.round(initialX + 44 * 1600 / viewport.width)));
+  await expect(page.getByLabel('Player initial Y')).toHaveValue(String(Math.round(initialY + 22 * 900 / viewport.height)));
+  await page.getByRole('button', { name: 'Undo' }).click();
+  await expect(page.getByLabel('Player initial X')).toHaveValue(String(initialX));
+  await expect(page.getByLabel('Player initial Y')).toHaveValue(String(initialY));
+});
+
+test('Player walks toward a background click through an Overlay', async ({ page, baseURL }) => {
+  test.setTimeout(45_000);
+  if (!baseURL) throw new Error('Missing test baseURL.');
+  await page.goto(baseURL);
+  const sprite = await page.evaluate(() => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 20; canvas.height = 40;
+    const context = canvas.getContext('2d')!;
+    context.fillStyle = '#ff0000'; context.fillRect(0, 0, 20, 40);
+    return canvas.toDataURL('image/png').split(',')[1]!;
+  });
+  const png = Buffer.from(sprite, 'base64');
+  const walkGif = Buffer.from('R0lGODlhBAAEAIEAAAD/AAAAAAAAAAAAACH/C05FVFNDQVBFMi4wAwEAAAAh+QQACgAAACwAAAAABAAEAAAICQABCBxIsCCAgAAh+QQBCgABACwAAAAABAAEAIEAAP8AAAAAAAAAAAAICQABCBxIsCCAgAA7', 'base64');
+  await page.getByRole('button', { name: 'Characters', exact: true }).click();
+  await page.getByRole('button', { name: 'New character' }).click();
+  await page.getByRole('textbox', { name: 'Character name' }).fill('Walker');
+  const referenceChooser = page.waitForEvent('filechooser');
+  await page.getByRole('button', { name: 'Choose reference' }).click();
+  await (await referenceChooser).setFiles({ name: 'walker_reference.png', mimeType: 'image/png', buffer: png });
+  await page.getByRole('button', { name: 'Create character' }).click();
+  for (const [key, filename] of [['idle', 'idle.png'], ['walk right', 'walk_right.gif']] as const) {
+    const chooser = page.waitForEvent('filechooser');
+    await page.getByRole('button', { name: `Choose ${key} sprite` }).click();
+    await (await chooser).setFiles({ name: filename, mimeType: key === 'walk right' ? 'image/gif' : 'image/png', buffer: key === 'walk right' ? walkGif : png });
+  }
+  await page.getByRole('button', { name: 'Scenes', exact: true }).click();
+  await page.getByRole('treeitem', { name: 'Player' }).click();
+  await page.getByLabel('Player character').selectOption({ label: 'Walker' });
+  await expect(page.getByRole('img', { name: 'Walker idle' })).toBeVisible();
+  await page.getByRole('button', { name: 'Preview walk right' }).click();
+  await expect(page.getByRole('img', { name: 'Walker walk right' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Preview walk right' })).toHaveAttribute('aria-pressed', 'true');
+  const spritePreview = await page.locator('.player-preview-sprite').boundingBox();
+  if (!spritePreview) throw new Error('Player animation preview unavailable.');
+  await page.mouse.click(spritePreview.x + spritePreview.width * 0.25, spritePreview.y + spritePreview.height * 0.75);
+  await expect(page.getByLabel('Player anchor X')).toHaveValue('0.25');
+  await expect(page.getByLabel('Player anchor Y')).toHaveValue('0.75');
+  await page.getByLabel('Player anchor X').fill('0.5');
+  await page.getByLabel('Player anchor Y').fill('1');
+  await page.getByLabel('Player initial X').fill('120');
+  await page.getByLabel('Player initial Y').fill('700');
+  await page.getByRole('treeitem', { name: 'Walkable Area' }).click();
+  const mask = await page.evaluate(() => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 1376; canvas.height = 768;
+    const context = canvas.getContext('2d')!;
+    context.fillStyle = '#000000'; context.fillRect(0, 0, 688, 768);
+    context.fillStyle = '#ffffff'; context.fillRect(688, 0, 688, 768);
+    context.clearRect(1200, 0, 176, 768);
+    return canvas.toDataURL('image/png').split(',')[1]!;
+  });
+  await page.getByLabel('Walkable Area file').setInputFiles({ name: 'walk_scale.png', mimeType: 'image/png', buffer: Buffer.from(mask, 'base64') });
+  await expect(page.getByText('walk_scale.png')).toBeVisible();
+  await page.getByRole('button', { name: 'Add element' }).click();
+  await page.getByRole('menuitem', { name: 'Overlay', exact: true }).click();
+  await page.getByLabel('Rename element').press('Enter');
+  const overlay = await page.evaluate(() => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 1376; canvas.height = 768;
+    return canvas.toDataURL('image/png').split(',')[1]!;
+  });
+  await page.getByLabel('Element files').setInputFiles({ name: 'walk_overlay.png', mimeType: 'image/png', buffer: Buffer.from(overlay, 'base64') });
+  await expect(page.getByText('walk_overlay.png')).toBeVisible();
+  await page.getByRole('button', { name: 'Add element' }).click();
+  await page.getByRole('menuitem', { name: 'Box element' }).click();
+  await page.getByLabel('Rename element').fill('silent_spot');
+  await page.getByLabel('Rename element').press('Enter');
+  await page.getByLabel('Available action View').uncheck();
+  await page.getByLabel('Element x').fill('300');
+  await page.getByLabel('Element y').fill('600');
+  await page.getByRole('button', { name: 'Add element' }).click();
+  await page.getByRole('menuitem', { name: 'Box element' }).click();
+  await page.getByLabel('Rename element').fill('wall_poster');
+  await page.getByLabel('Rename element').press('Enter');
+  await page.getByLabel('Element name').fill('wall_poster');
+  await page.getByLabel('Element x').fill('1400');
+  await page.getByLabel('Element y').fill('600');
+  await expect(page.getByRole('tree', { name: 'Scene element tree' }).getByRole('treeitem').first()).toHaveText('wall_poster');
+  await page.getByRole('treeitem', { name: 'SceneManager' }).click();
+  await page.getByRole('button', { name: 'Add Event' }).click();
+  await page.getByLabel('Trigger 1').getByLabel('Trigger type').selectOption('character_position');
+  await page.getByRole('button', { name: 'Edit Script' }).click();
+  const positionDialog = page.getByRole('dialog', { name: 'Script for Event 1' });
+  await expect(positionDialog.locator('.monaco-editor')).toBeVisible();
+  const positionSignature = await positionDialog.locator('.scene-script-header code').first().textContent();
+  const positionFunction = positionSignature?.split('(')[0];
+  if (!positionFunction) throw new Error('Position event function name missing.');
+  await positionDialog.locator('.monaco-editor').click();
+  await page.keyboard.press('ControlOrMeta+A');
+  await page.keyboard.insertText(`function ${positionFunction}(scene, game, trigger) { if (trigger.phase === "end") scene.elements["wall_poster"].disabled = true; }`);
+  await positionDialog.getByRole('button', { name: 'Save Script' }).click();
+  await page.getByRole('button', { name: 'Project', exact: true }).click();
+  await page.getByRole('button', { name: 'Preview game' }).click();
+  await expect(page.getByText('Game view ready.')).toBeVisible();
+  const canvas = page.locator('.preview-stage canvas');
+  const before = await canvas.screenshot();
+  const colorCount = async (screenshot: Buffer, color: 'red' | 'green' | 'blue') => page.evaluate(async ({ image, color }) => {
+    const decoded = new Image(); decoded.src = `data:image/png;base64,${image}`; await decoded.decode();
+    const sample = document.createElement('canvas'); sample.width = decoded.width; sample.height = decoded.height;
+    const context = sample.getContext('2d')!; context.drawImage(decoded, 0, 0);
+    const pixels = context.getImageData(0, 0, sample.width, sample.height).data;
+    let count = 0;
+    for (let index = 0; index < pixels.length; index += 4) if (color === 'red' ? pixels[index]! > 240 && pixels[index + 1]! < 20 && pixels[index + 2]! < 20 : color === 'green' ? pixels[index]! < 20 && pixels[index + 1]! > 240 && pixels[index + 2]! < 20 : pixels[index]! < 20 && pixels[index + 1]! < 20 && pixels[index + 2]! > 240) count++;
+    return count;
+  }, { image: screenshot.toString('base64'), color });
+  const routePixels = async (screenshot: Buffer) => page.evaluate(async image => {
+    const decoded = new Image(); decoded.src = `data:image/png;base64,${image}`; await decoded.decode();
+    const sample = document.createElement('canvas'); sample.width = decoded.width; sample.height = decoded.height;
+    const context = sample.getContext('2d')!; context.drawImage(decoded, 0, 0);
+    const pixels = context.getImageData(0, 0, sample.width, sample.height).data;
+    let count = 0;
+    for (let index = 0; index < pixels.length; index += 4) if (pixels[index]! > 220 && pixels[index + 1]! > 165 && pixels[index + 2]! < 160) count++;
+    return count;
+  }, screenshot.toString('base64'));
+  const initialRed = await colorCount(before, 'red');
+  expect(initialRed).toBeGreaterThan(100);
+  const box = await canvas.boundingBox();
+  if (!box) throw new Error('Preview canvas unavailable.');
+  await page.mouse.move(box.x + box.width * (1000 / 1600), box.y + box.height * (700 / 900));
+  await expect(page.locator('.preview .action-hint')).toHaveText('Move to here');
+  await page.mouse.move(box.x + box.width * (1500 / 1600), box.y + box.height * (800 / 900));
+  await expect(page.locator('.preview .action-hint')).toBeEmpty();
+  await expect.poll(() => canvas.evaluate(element => getComputedStyle(element).cursor)).toContain('data:image/png');
+  await page.mouse.click(box.x + box.width * (1500 / 1600), box.y + box.height * (800 / 900));
+  await page.waitForTimeout(250);
+  expect((await canvas.screenshot()).equals(before)).toBe(true);
+  await page.mouse.move(box.x + box.width * (1480 / 1600), box.y + box.height * (650 / 900));
+  await expect(page.locator('.preview .action-hint')).toHaveText('View wall_poster');
+  await page.mouse.click(box.x + box.width * (1480 / 1600), box.y + box.height * (650 / 900));
+  await expect(page.getByText('You see wall_poster.')).toBeVisible();
+  await page.mouse.move(box.x + box.width * (380 / 1600), box.y + box.height * (650 / 900));
+  await expect(page.locator('.preview .action-hint')).toBeEmpty();
+  await page.mouse.click(box.x + box.width * (380 / 1600), box.y + box.height * (650 / 900));
+  await page.waitForTimeout(250);
+  expect((await canvas.screenshot()).equals(before)).toBe(true);
+  await page.getByRole('checkbox', { name: 'Debug walk path' }).check();
+  await page.mouse.click(box.x + box.width * (1000 / 1600), box.y + box.height * (700 / 900));
+  await page.waitForTimeout(700);
+  const moving = await canvas.screenshot();
+  expect(moving.equals(before)).toBe(false);
+  await expect.poll(async () => {
+    const frame = await canvas.screenshot();
+    return await colorCount(frame, 'green') + await colorCount(frame, 'blue');
+  }, { timeout: 3000 }).toBeGreaterThan(100);
+  expect(await routePixels(moving)).toBeGreaterThan(await routePixels(before) + 40);
+  await page.getByRole('checkbox', { name: 'Debug walk path' }).uncheck();
+  expect(await routePixels(await canvas.screenshot())).toBeLessThan(await routePixels(moving) - 40);
+  await expect.poll(async () => colorCount(await canvas.screenshot(), 'red'), { timeout: 12_000 }).toBeGreaterThan(100);
+  const arrived = await canvas.screenshot();
+  expect(arrived.equals(moving)).toBe(false);
+  const finalRed = await colorCount(arrived, 'red');
+  expect(finalRed).toBeGreaterThan(100);
+  expect(finalRed).toBeLessThan(initialRed / 2);
+  await page.mouse.move(box.x + box.width * (1480 / 1600), box.y + box.height * (650 / 900));
+  await expect(page.locator('.preview .action-hint')).toBeEmpty();
+});
+
 test('image elements choose an image and expose animation playback controls', async ({ page, baseURL }) => {
   if (!baseURL) throw new Error('Missing test baseURL.');
   await page.goto(baseURL);
@@ -448,6 +917,8 @@ test('image elements choose an image and expose animation playback controls', as
   await imageControls.getByRole('button', { name: 'Lock Element' }).click();
   await expect(page.locator('.scene-image-element img')).toBeVisible();
   await expect(page.locator('.scene-image-element')).toHaveCSS('border-top-color', 'rgba(0, 0, 0, 0)');
+  await expect(page.locator('.scene-image-element')).toHaveCSS('pointer-events', 'none');
+  await expect(page.getByLabel('Element width')).toBeEnabled();
   await imageControls.getByRole('button', { name: 'Unlock Element' }).click();
   await expect(page.getByLabel('Preserve aspect ratio')).toBeChecked();
   await page.getByLabel('Element width').fill('200');
@@ -466,13 +937,93 @@ test('image elements choose an image and expose animation playback controls', as
   await expect(page.getByLabel('Reverse animation')).toBeChecked();
 });
 
-test('animation atlas element plays in editor and preview', async ({ page, baseURL }) => {
+test('Overlay image stays aligned, reorders, and lets clicks reach elements beneath it', async ({ page, baseURL }) => {
+  if (!baseURL) throw new Error('Missing test baseURL.');
+  await page.goto(baseURL);
+  await page.getByRole('button', { name: 'Scenes', exact: true }).click();
+  const tree = page.getByRole('tree', { name: 'Scene element tree' });
+  await page.getByRole('button', { name: 'Add element' }).click();
+  await page.getByRole('menuitem', { name: 'Box element' }).click();
+  await page.getByLabel('Rename element').press('Enter');
+  await page.getByRole('button', { name: 'Add element' }).click();
+  await page.getByRole('menuitem', { name: 'Overlay', exact: true }).click();
+  await page.getByLabel('Rename element').press('Enter');
+  await expect(page.getByLabel('Element ID')).toHaveValue('Overlay');
+  await expect(page.getByLabel('Element name')).toHaveCount(0);
+  await expect(page.getByRole('group', { name: 'Element geometry' })).toHaveCount(0);
+  await expect(page.getByRole('group', { name: 'Available Actions' })).toHaveCount(0);
+  await page.getByLabel('Element files').setInputFiles({ name: 'wrong.png', mimeType: 'image/png', buffer: pixel });
+  await expect(page.getByRole('alert')).toContainText('1376 × 768');
+  const image = await page.evaluate(() => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 1376; canvas.height = 768;
+    const context = canvas.getContext('2d')!;
+    context.fillStyle = 'rgba(255,0,0,0.25)'; context.fillRect(0, 0, canvas.width, canvas.height);
+    return canvas.toDataURL('image/png').split(',')[1]!;
+  });
+  await page.getByLabel('Element files').setInputFiles({ name: 'overlay.png', mimeType: 'image/png', buffer: Buffer.from(image, 'base64') });
+  await expect(page.getByText('overlay.png')).toBeVisible();
+  const overlay = page.locator('.scene-canvas .layout > img');
+  await expect(overlay).toHaveCSS('pointer-events', 'none');
+  await expect(overlay).toHaveCSS('width', /.+/);
+  const box = page.getByRole('button', { name: 'Select element Element', exact: true });
+  const bounds = await box.boundingBox();
+  if (!bounds) throw new Error('Box unavailable.');
+  const scene = await page.locator('.scene-canvas .layout').boundingBox();
+  if (!scene) throw new Error('Scene layout unavailable.');
+  const ratioX = (bounds.x + bounds.width / 2 - scene.x) / scene.width;
+  const ratioY = (bounds.y + bounds.height / 2 - scene.y) / scene.height;
+  await page.mouse.click(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
+  await expect(tree.getByRole('treeitem', { name: 'Element', exact: true })).toHaveAttribute('aria-selected', 'true');
+  await expect(tree.getByRole('treeitem').first()).toHaveText('Overlay');
+  const opened = page.waitForEvent('popup');
+  await page.getByRole('button', { name: 'Play scene' }).click();
+  const player = await opened;
+  await expect(player.getByText('Game view ready.')).toBeVisible();
+  const playerCanvas = await player.locator('.preview-stage canvas').boundingBox();
+  if (!playerCanvas) throw new Error('Scene player canvas unavailable.');
+  await player.mouse.click(playerCanvas.x + playerCanvas.width * ratioX, playerCanvas.y + playerCanvas.height * ratioY);
+  await expect(player.getByText('You see Element.')).toBeVisible();
+  await player.getByRole('button', { name: 'Close preview' }).click();
+  const overlayRow = tree.getByRole('treeitem', { name: 'Overlay' });
+  await tree.getByRole('treeitem', { name: 'Element', exact: true }).dragTo(overlayRow, { targetPosition: { x: 30, y: 3 } });
+  await expect(tree.getByRole('treeitem').first()).toHaveText('Element');
+  const controls = page.getByRole('group', { name: 'Overlay controls' });
+  await controls.getByRole('button', { name: 'Hide Overlay' }).click();
+  await expect(overlay).toHaveCount(0);
+  await controls.getByRole('button', { name: 'Show Overlay' }).click();
+  await controls.getByRole('button', { name: 'Disable Overlay' }).click();
+  await expect(overlay).toHaveCSS('opacity', '0.4');
+  await controls.getByRole('button', { name: 'Enable Overlay' }).click();
+  await page.getByRole('button', { name: 'Project', exact: true }).click();
+  const download = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Export project' }).click();
+  const exported = readWorkspaceArchive(await readFile(await (await download).path()));
+  expect(exported.project.rooms[0].elements[0]).toMatchObject({ type: 'overlay', availableActions: [], bounds: { x: 0, y: 0, width: 1600, height: 900 } });
+  expect(exported.project.rooms[0].elements[0]).not.toHaveProperty('name');
+  await page.getByRole('button', { name: 'Preview game' }).click();
+  await expect(page.getByText('Game view ready.')).toBeVisible();
+  const preview = await page.locator('.preview-stage canvas').boundingBox();
+  if (!preview) throw new Error('Preview canvas unavailable.');
+  await page.mouse.click(preview.x + preview.width * ratioX, preview.y + preview.height * ratioY);
+  await expect(page.getByText('You see Element.')).toBeVisible();
+});
+
+test('animation atlas previews and async scripts control single runs and loops', async ({ page, baseURL }) => {
+  test.setTimeout(90_000);
   if (!baseURL) throw new Error('Missing test baseURL.');
   await page.goto(baseURL);
   const atlas = { format: 'pcag-animation-atlas', image: 'flash_atlas.png', gif: 'flash.gif', fps: 5, frameWidth: 1, frameHeight: 1, frames: [{ rect: { x: 0, y: 0, width: 1, height: 1 } }, { rect: { x: 1, y: 0, width: 1, height: 1 } }] };
+  const atlasImage = await page.evaluate(() => {
+    const canvas = document.createElement('canvas'); canvas.width = 2; canvas.height = 1;
+    const context = canvas.getContext('2d')!;
+    context.fillStyle = '#ff0000'; context.fillRect(0, 0, 1, 1);
+    context.fillStyle = '#0000ff'; context.fillRect(1, 0, 1, 1);
+    return canvas.toDataURL('image/png').split(',')[1]!;
+  });
   await page.getByRole('button', { name: 'Assets', exact: true }).click();
   await page.getByRole('complementary', { name: 'Asset folders' }).getByRole('button', { name: 'animation' }).click();
-  await page.getByLabel('Asset files').setInputFiles({ name: 'flash_atlas.png', mimeType: 'image/png', buffer: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAIAAAABCAYAAAD0In+KAAAADklEQVR4nGP4z8DwHwQBEPgD/U6VwW8AAAAASUVORK5CYII=', 'base64') });
+  await page.getByLabel('Asset files').setInputFiles({ name: 'flash_atlas.png', mimeType: 'image/png', buffer: Buffer.from(atlasImage, 'base64') });
   await page.getByRole('button', { name: 'Scenes', exact: true }).click();
   await page.getByRole('button', { name: 'Add element' }).click();
   await page.getByRole('menuitem', { name: 'Image element' }).click();
@@ -484,11 +1035,53 @@ test('animation atlas element plays in editor and preview', async ({ page, baseU
   expect(animationChooser.isMultiple()).toBe(false);
   await animationChooser.setFiles({ name: 'flash_atlas.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(atlas)) });
   await expect(page.getByText('flash_atlas.json')).toBeVisible();
+  const mediaPreview = page.getByRole('region', { name: 'Element media preview' });
+  const previewFrame = mediaPreview.getByRole('img', { name: 'Selected element animation preview' });
+  const playPreview = mediaPreview.getByRole('button', { name: 'Play preview' });
+  const stopPreview = mediaPreview.getByRole('button', { name: 'Stop preview' });
+  await expect(playPreview).toBeVisible();
+  await expect(stopPreview).toBeVisible();
+  for (const button of [playPreview, stopPreview]) {
+    const size = await button.boundingBox();
+    expect(size?.width).toBe(size?.height);
+  }
+  await expect(previewFrame).toHaveAttribute('data-frame', '0');
+  await page.waitForTimeout(500);
+  await expect(previewFrame).toHaveAttribute('data-frame', '0');
+  await playPreview.click();
+  await expect.poll(() => previewFrame.getAttribute('data-frame')).toBe('1');
+  await stopPreview.click();
+  await expect(previewFrame).toHaveAttribute('data-frame', '0');
+  await page.waitForTimeout(500);
+  await expect(previewFrame).toHaveAttribute('data-frame', '0');
+  await page.getByLabel('Element playback').selectOption('once');
+  await playPreview.click();
+  await expect.poll(() => previewFrame.getAttribute('data-frame')).toBe('1');
+  await expect(playPreview).toBeVisible();
+  await page.waitForTimeout(500);
+  await expect(previewFrame).toHaveAttribute('data-frame', '1');
+  await playPreview.click();
+  await expect(previewFrame).toHaveAttribute('data-frame', '0');
+  await expect.poll(() => previewFrame.getAttribute('data-frame')).toBe('1');
+  await page.getByLabel('Element playback').selectOption('loop');
   await page.getByLabel('Element width').fill('20');
   await expect(page.locator('.element-sprite')).toBeVisible();
+  await expect.poll(() => page.locator('.element-sprite').getAttribute('data-frame-x')).toBe('1');
   await page.getByLabel('Element playback').selectOption('once');
   await page.getByLabel('Reverse animation').check();
+  await expect(page.locator('.element-sprite')).toHaveAttribute('data-frame-x', '1');
+  await page.waitForTimeout(500);
+  await expect(page.locator('.element-sprite')).toHaveAttribute('data-frame-x', '1');
+  await page.getByLabel('Reverse animation').uncheck();
   await expect(page.locator('.element-sprite')).toHaveAttribute('data-frame-x', '0');
+  await page.waitForTimeout(500);
+  await expect(page.locator('.element-sprite')).toHaveAttribute('data-frame-x', '0');
+  await page.getByLabel('Reverse animation').check();
+  await page.getByRole('button', { name: 'Project', exact: true }).click();
+  await page.getByRole('button', { name: 'Scenes', exact: true }).click();
+  await expect(page.locator('.element-sprite')).toHaveAttribute('data-frame-x', '1');
+  await page.waitForTimeout(500);
+  await expect(page.locator('.element-sprite')).toHaveAttribute('data-frame-x', '1');
   await page.getByRole('button', { name: 'Project', exact: true }).click();
   await page.getByRole('button', { name: 'Preview game' }).click();
   await expect(page.getByText('Game view ready.')).toBeVisible();
@@ -497,6 +1090,164 @@ test('animation atlas element plays in editor and preview', async ({ page, baseU
   const exported = readWorkspaceArchive(await readFile(await (await download).path()));
   expect(exported.project.rooms[0].elements.at(-1).media).toMatchObject({ path: 'animation/flash_atlas.json', kind: 'animation', loop: false, reverse: true });
   expect(exported.files.map((file: { path: string }) => file.path)).toContain('animation/flash_atlas.png');
+  await page.getByRole('button', { name: 'Scenes', exact: true }).click();
+  await page.getByRole('treeitem', { name: 'Element' }).click();
+  await page.getByLabel('Reverse animation').uncheck();
+  await page.getByLabel('Available action Use').check();
+  const animationElement = exported.project.rooms[0].elements.at(-1);
+  if (!animationElement) throw new Error('Animation element geometry unavailable.');
+  const point = { x: (animationElement.bounds.x + animationElement.bounds.width / 2) / exported.project.rooms[0].width, y: (animationElement.bounds.y + animationElement.bounds.height / 2) / exported.project.rooms[0].height };
+  await page.getByRole('treeitem', { name: 'SceneManager' }).click();
+  for (const [action, method] of [['view', 'playAnimation'], ['use', 'stopAnimation']] as const) {
+    await page.getByRole('button', { name: 'Add Event' }).click();
+    const card = page.locator('.scene-event-card').last();
+    await card.getByLabel('Trigger type').selectOption('player_action');
+    await card.getByLabel('Player action').selectOption(action);
+    await card.getByRole('button', { name: 'Edit Script' }).click();
+    const dialog = page.getByRole('dialog', { name: /Script for Event/ });
+    const signature = await dialog.locator('.scene-script-header code').first().textContent();
+    const functionName = signature?.split('(')[0];
+    if (!functionName) throw new Error('Event function name missing.');
+    await dialog.locator('.monaco-editor').click();
+    await page.keyboard.press('ControlOrMeta+A');
+    await page.keyboard.insertText(`async function ${functionName}(scene, game, trigger) { await scene.elements["Element"].${method}(); }`);
+    await dialog.getByRole('button', { name: 'Save Script' }).click();
+  }
+  await page.getByRole('button', { name: 'Project', exact: true }).click();
+  await page.getByRole('button', { name: 'Preview game' }).click();
+  await expect(page.getByText('Game view ready.')).toBeVisible();
+  const gameCanvas = page.locator('.preview-stage canvas');
+  const firstFrame = await gameCanvas.screenshot();
+  const gameBounds = await gameCanvas.boundingBox();
+  if (!gameBounds) throw new Error('Player canvas unavailable.');
+  const cursorPoint = { x: gameBounds.x + gameBounds.width * point.x, y: gameBounds.y + gameBounds.height * point.y };
+  await page.mouse.move(cursorPoint.x, cursorPoint.y);
+  await expect(page.locator('.preview .action-hint')).toHaveText('View Element');
+  await page.mouse.click(cursorPoint.x, cursorPoint.y);
+  await expect.poll(async () => !(await gameCanvas.screenshot()).equals(firstFrame)).toBe(true);
+  await page.waitForTimeout(350);
+  const lastFrame = await gameCanvas.screenshot();
+  await page.waitForTimeout(350);
+  expect((await gameCanvas.screenshot()).equals(lastFrame)).toBe(true);
+  await page.mouse.move(cursorPoint.x, cursorPoint.y);
+  await page.mouse.wheel(0, 300);
+  await expect(page.locator('.preview .action-hint')).toHaveText('Use Element');
+  await page.mouse.click(cursorPoint.x, cursorPoint.y);
+  await expect.poll(async () => (await gameCanvas.screenshot()).equals(firstFrame)).toBe(true);
+  await page.getByRole('button', { name: 'Scenes', exact: true }).click();
+  await page.getByRole('treeitem', { name: 'Element' }).click();
+  await page.getByLabel('Element playback').selectOption('loop');
+  await page.getByRole('button', { name: 'Project', exact: true }).click();
+  await page.getByRole('button', { name: 'Preview game' }).click();
+  await expect(page.getByText('Game view ready.')).toBeVisible();
+  const loopCanvas = page.locator('.preview-stage canvas');
+  await loopCanvas.scrollIntoViewIfNeeded();
+  const loopBounds = await loopCanvas.boundingBox();
+  if (!loopBounds) throw new Error('Loop canvas unavailable.');
+  const loopPoint = { x: loopBounds.x + loopBounds.width * point.x, y: loopBounds.y + loopBounds.height * point.y };
+  await page.mouse.move(loopPoint.x, loopPoint.y);
+  await page.mouse.wheel(0, 300);
+  await expect(page.locator('.preview .action-hint')).toHaveText('Use Element');
+  await page.mouse.click(loopPoint.x, loopPoint.y);
+  await expect.poll(async () => (await loopCanvas.screenshot()).equals(firstFrame)).toBe(true);
+  await page.mouse.move(loopPoint.x, loopPoint.y);
+  await page.mouse.wheel(0, -300);
+  await expect(page.locator('.preview .action-hint')).toHaveText('View Element');
+  await page.mouse.click(loopPoint.x, loopPoint.y);
+  await expect.poll(async () => !(await loopCanvas.screenshot()).equals(firstFrame)).toBe(true);
+  await page.getByRole('button', { name: 'Scenes', exact: true }).click();
+  await page.getByRole('treeitem', { name: 'Element' }).click();
+  await page.getByLabel('Element playback').selectOption('once');
+  await page.getByRole('treeitem', { name: 'SceneManager' }).click();
+  for (const [index, body] of ['scene.elements["Element"].visible = false;', 'await scene.elements["Element"].playAnimation(); scene.elements["Element"].visible = true;'].entries()) {
+    const card = page.locator('.scene-event-card').nth(index);
+    if (index > 0) await card.getByRole('button', { name: 'Expand Event 2' }).click();
+    await card.getByLabel('Trigger type').selectOption('scene_load');
+    await card.getByRole('button', { name: 'Edit Script' }).click();
+    const dialog = page.getByRole('dialog', { name: /Script for Event/ });
+    const signature = await dialog.locator('.scene-script-header code').first().textContent();
+    const functionName = signature?.split('(')[0];
+    if (!functionName) throw new Error('Event function name missing.');
+    await dialog.locator('.monaco-editor').click();
+    await page.keyboard.press('ControlOrMeta+A');
+    await page.keyboard.insertText(`async function ${functionName}(scene, game, trigger) { ${body} }`);
+    await dialog.getByRole('button', { name: 'Save Script' }).click();
+  }
+  await page.getByRole('button', { name: 'Project', exact: true }).click();
+  await page.getByRole('button', { name: 'Preview game' }).click();
+  await expect(page.getByText('Game view ready.')).toBeVisible();
+  await page.waitForTimeout(1200);
+  await expect(page.getByText('Game view ready.')).toBeVisible();
+});
+
+test('startup animation renders intermediate frames while its async event is pending', async ({ page, baseURL }, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium-development', 'The runtime source module is served by the Vite development server.');
+  if (!baseURL) throw new Error('Missing test baseURL.');
+  await page.goto(baseURL);
+  const runtimeUrl = `/@fs/${fileURLToPath(new URL('../../packages/runtime/src/index.ts', import.meta.url)).replaceAll('\\', '/')}`;
+  await page.evaluate(async runtimeUrl => {
+    const { mountRoom } = await import(/* @vite-ignore */ runtimeUrl);
+    const stage = document.createElement('div');
+    stage.id = 'runtime-fixture';
+    stage.style.cssText = 'width:800px;height:450px';
+    document.body.append(stage);
+    const colorStrip = document.createElement('canvas');
+    colorStrip.width = 2048;
+    colorStrip.height = 512;
+    const context = colorStrip.getContext('2d')!;
+    ['#ff0000', '#00ff00', '#0000ff', '#ffff00'].forEach((color, index) => { context.fillStyle = color; context.fillRect(index * 512, 0, 512, 512); });
+    const atlas = { format: 'pcag-animation-atlas', image: 'frames.png', gif: 'frames.gif', fps: 1, frameWidth: 512, frameHeight: 512, frames: Array.from({ length: 4 }, (_, index) => ({ rect: { x: index * 512, y: 0, width: 512, height: 512 } })) };
+    const background = document.createElement('canvas');
+    background.width = 1;
+    background.height = 1;
+    const closed = document.createElement('canvas');
+    closed.width = 1;
+    closed.height = 1;
+    const closedContext = closed.getContext('2d')!;
+    closedContext.fillStyle = '#ffffff';
+    closedContext.fillRect(0, 0, 1, 1);
+    const project = {
+      schemaVersion: 1, id: 'id_fixture', name: 'Animation fixture', startRoomId: 'id_room', gameState: {}, characters: [],
+      assets: [{ id: 'id_background', name: 'Background', kind: 'image', path: 'backgrounds/blank.png' }],
+      rooms: [{ id: 'id_room', name: 'Room', width: 800, height: 450, backgroundAssetId: 'id_background',
+        elements: [
+          { game_id: 'id_closed', element_id: 'closed', name: 'Closed', type: 'image', enabled: true, visible: true, locked: false, availableActions: [], bounds: { x: 300, y: 125, width: 200, height: 200 }, media: { path: 'images/closed.png', kind: 'image', width: 1, height: 1, preserveAspectRatio: false, loop: true, reverse: false } },
+          { game_id: 'id_animation', element_id: 'animation', name: 'Animation', type: 'image', enabled: true, visible: false, locked: false, availableActions: ['view'], bounds: { x: 300, y: 125, width: 200, height: 200 }, media: { path: 'animation/frames.json', kind: 'animation', width: 512, height: 512, preserveAspectRatio: false, loop: false, reverse: false } },
+        ],
+        player: { characterId: '', position: { x: 400, y: 400 }, anchor: { x: 0.5, y: 1 }, scale: 1, layer: 2 }, walkableArea: { path: '', minScale: 0.5, maxScale: 1.5 }, sceneState: { open: { value: false, defaultValue: false } },
+        sceneManager: { events: [
+          { id: 'event_set', name: 'Set state', triggers: [{ kind: 'scene_load' }], script: 'async function on_event_set(scene, game, trigger) { scene.state.open = true; }' },
+          { id: 'event_play', name: 'Play', triggers: [{ kind: 'scene_variable_change', variableName: 'open' }], script: 'async function on_event_play(scene, game, trigger) { scene.elements["closed"].visible = false; scene.elements["animation"].visible = true; await scene.elements["animation"].playAnimation(); }' },
+        ] } }],
+    } as import('../../packages/project-format/src/index').Project;
+    const urls = new Map([
+      ['backgrounds/blank.png', background.toDataURL('image/png')],
+      ['images/closed.png', closed.toDataURL('image/png')],
+      ['animation/frames.png', colorStrip.toDataURL('image/png')],
+      ['animation/frames.json', `data:application/json;base64,${btoa(JSON.stringify(atlas))}`],
+    ]);
+    mountRoom({ project, assetUrls: urls, stage, onInspect: () => {}, onError: (message: string) => { document.body.dataset.runtimeError = message; }, onSceneLoaded: () => { document.body.dataset.sceneLoaded = 'true'; return new Promise<void>(resolve => document.body.addEventListener('start-test-animation', () => resolve(), { once: true })); }, onReady: () => { document.body.dataset.scriptsFinished = 'true'; } });
+  }, runtimeUrl);
+  await expect(page.locator('body')).toHaveAttribute('data-scene-loaded', 'true');
+  const canvas = page.locator('#runtime-fixture canvas');
+  const centerColor = async () => page.evaluate(async base64 => {
+    const image = new Image();
+    image.src = `data:image/png;base64,${base64}`;
+    await image.decode();
+    const pixel = document.createElement('canvas'); pixel.width = 1; pixel.height = 1;
+    const context = pixel.getContext('2d')!;
+    context.drawImage(image, Math.floor(image.width / 2), Math.floor(image.height / 2), 1, 1, 0, 0, 1, 1);
+    return [...context.getImageData(0, 0, 1, 1).data].slice(0, 3);
+  }, (await canvas.screenshot()).toString('base64'));
+  await expect.poll(centerColor).toEqual([255, 255, 255]);
+  await page.locator('body').evaluate(element => element.dispatchEvent(new Event('start-test-animation')));
+  await expect.poll(centerColor).toEqual([255, 0, 0]);
+  await expect.poll(centerColor).toEqual([0, 255, 0]);
+  await expect(page.locator('body')).not.toHaveAttribute('data-scripts-finished', 'true');
+  await expect.poll(centerColor).toEqual([0, 0, 255]);
+  await expect.poll(centerColor).toEqual([255, 255, 0]);
+  await expect(page.locator('body')).toHaveAttribute('data-scripts-finished', 'true', { timeout: 7000 });
+  await expect(page.locator('body')).not.toHaveAttribute('data-runtime-error', /.+/);
 });
 
 test('navigation, asset tree operations, scene selection, and workspace round trip', async ({ page, baseURL }, testInfo) => {
@@ -535,7 +1286,13 @@ test('navigation, asset tree operations, scene selection, and workspace round tr
   await expect(page.getByRole('button', { name: /waterfront/ })).toBeVisible();
 
   await page.getByRole('button', { name: 'Scenes', exact: true }).click();
-  await expect.poll(() => page.locator('.scene-tree-icon').first().evaluate(element => (element as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
+  await expect(page.locator('.scene-kind-icon-art').first()).toHaveCSS('background-image', /scene-element-icons/);
+  await expect(page.getByRole('treeitem', { name: 'Background' }).locator('.scene-kind-icon-art')).toHaveCSS('background-position', '-60px -30px');
+  const iconSlots = await page.locator('.scene-tree .scene-kind-icon').evaluateAll(icons => icons.map(icon => {
+    const bounds = icon.getBoundingClientRect();
+    return { width: bounds.width, height: bounds.height };
+  }));
+  expect(iconSlots.every(slot => slot.width === 34 && slot.height === 34)).toBe(true);
   await page.screenshot({ path: testInfo.outputPath('scene-icons.png'), fullPage: true });
   await expect(page.locator('.topbar').getByLabel('Select scene')).toBeVisible();
   await expect(page.getByRole('tree', { name: 'Scene element tree' }).getByRole('treeitem', { name: 'Background' })).toBeVisible();
@@ -589,7 +1346,7 @@ test('navigation, asset tree operations, scene selection, and workspace round tr
   expect(data.folders).toContain('backgrounds/waterfront');
   expect(data.files.some((file: { path: string }) => file.path === 'backgrounds/waterfront/dock.png')).toBe(true);
   const lake = data.project.rooms.find((room: { name: string }) => room.name === 'Test 1');
-  lake.elements.push({ id: 'element_moon', name: 'Moon', bounds: { x: 100, y: 100, width: 100, height: 100 }, inspect: 'Moon' }, { id: 'element_star', name: 'Star', bounds: { x: 250, y: 100, width: 100, height: 100 }, inspect: 'Star' });
+  lake.elements.push({ game_id: 'element_moon', element_id: 'Moon', name: 'Moon', bounds: { x: 100, y: 100, width: 100, height: 100 }, inspect: 'Moon' }, { game_id: 'element_star', element_id: 'Star', name: 'Star', bounds: { x: 250, y: 100, width: 100, height: 100 }, inspect: 'Star' });
   await page.getByLabel('Project name').fill('Unsaved');
   await page.getByRole('button', { name: 'Open another project' }).click();
   await page.getByRole('button', { name: 'Import a PCAG project file' }).click();
@@ -610,7 +1367,7 @@ test('navigation, asset tree operations, scene selection, and workspace round tr
   await page.getByRole('button', { name: 'Scenes', exact: true }).click();
   await page.getByLabel('Select scene').selectOption({ label: 'Test 1' });
   const tree = page.getByRole('tree', { name: 'Scene element tree' });
-  await expect(tree.getByRole('treeitem')).toHaveText(['Star', 'Moon', 'SceneState', 'GameState', 'SceneManager', 'Background']);
+  await expect(tree.getByRole('treeitem')).toHaveText(['Star', 'Moon', 'Player', 'SceneState', 'GameState', 'SceneManager', 'Walkable Area', 'Background']);
   await tree.getByRole('treeitem', { name: 'Star' }).click();
   await page.getByLabel('Element x').fill('300');
   await expect(page.getByLabel('View text')).toHaveCount(0);
@@ -621,20 +1378,20 @@ test('navigation, asset tree operations, scene selection, and workspace round tr
   await tree.getByRole('treeitem', { name: 'Moon' }).click();
   await expect(page.getByLabel('Element x')).toHaveValue('100');
   await tree.getByRole('treeitem', { name: 'Star' }).dragTo(tree.getByRole('treeitem', { name: 'Background' }));
-  await expect(tree.getByRole('treeitem')).toHaveText(['Moon', 'Star', 'SceneState', 'GameState', 'SceneManager', 'Background']);
+  await expect(tree.getByRole('treeitem')).toHaveText(['Moon', 'Player', 'Star', 'SceneState', 'GameState', 'SceneManager', 'Walkable Area', 'Background']);
   await tree.getByRole('treeitem', { name: 'Background' }).click({ button: 'right' });
   await expect(page.getByRole('menu', { name: 'Element actions' }).getByRole('menuitem', { name: 'Delete' })).toBeDisabled();
   await tree.getByRole('treeitem', { name: 'Moon' }).click({ button: 'right' });
   await page.getByRole('menuitem', { name: 'Rename' }).click();
   await page.getByLabel('Rename element').fill('Moonlight');
   await page.getByLabel('Rename element').press('Enter');
-  await expect(tree.getByRole('treeitem')).toHaveText(['Moonlight', 'Star', 'SceneState', 'GameState', 'SceneManager', 'Background']);
+  await expect(tree.getByRole('treeitem')).toHaveText(['Moonlight', 'Player', 'Star', 'SceneState', 'GameState', 'SceneManager', 'Walkable Area', 'Background']);
   await tree.getByRole('treeitem', { name: 'Moonlight' }).click({ button: 'right' });
   await page.getByRole('menuitem', { name: 'Clone' }).click();
-  await expect(tree.getByRole('treeitem')).toHaveText(['Moonlight copy', 'Moonlight', 'Star', 'SceneState', 'GameState', 'SceneManager', 'Background']);
+  await expect(tree.getByRole('treeitem')).toHaveText(['Moonlight copy', 'Moonlight', 'Player', 'Star', 'SceneState', 'GameState', 'SceneManager', 'Walkable Area', 'Background']);
   await tree.getByRole('treeitem', { name: 'Moonlight copy' }).click({ button: 'right' });
   await page.getByRole('menuitem', { name: 'Delete' }).click();
-  await expect(tree.getByRole('treeitem')).toHaveText(['Moonlight', 'Star', 'SceneState', 'GameState', 'SceneManager', 'Background']);
+  await expect(tree.getByRole('treeitem')).toHaveText(['Moonlight', 'Player', 'Star', 'SceneState', 'GameState', 'SceneManager', 'Walkable Area', 'Background']);
   await page.getByRole('button', { name: 'Add element' }).click();
   await page.getByRole('menu', { name: 'Add element type' }).getByRole('menuitem', { name: 'Box element' }).click();
   await expect(page.getByLabel('Rename element')).toHaveValue('Element');
@@ -646,7 +1403,7 @@ test('navigation, asset tree operations, scene selection, and workspace round tr
   await expect(page.getByLabel('Rename element')).toHaveValue('Element 2');
   await page.getByLabel('Rename element').fill('Moonlight');
   await page.getByLabel('Rename element').press('Enter');
-  await expect(tree.getByRole('treeitem')).toHaveText(['Moonlight', 'Element', 'Moonlight', 'Star', 'SceneState', 'GameState', 'SceneManager', 'Background']);
+  await expect(tree.getByRole('treeitem')).toHaveText(['Moonlight', 'Element', 'Moonlight', 'Player', 'Star', 'SceneState', 'GameState', 'SceneManager', 'Walkable Area', 'Background']);
   await tree.getByRole('treeitem', { name: 'SceneState' }).click();
   await page.getByRole('button', { name: 'Add variable' }).click();
   expect((await page.getByRole('group', { name: 'Variable variable' }).boundingBox())!.height).toBeLessThan(76);
@@ -685,10 +1442,11 @@ test('navigation, asset tree operations, scene selection, and workspace round tr
   const exportedElements = reordered.project.rooms.find((room: { name: string }) => room.name === 'Test 1').elements;
   expect(reordered.project.gameState).toEqual({ hasKey: { value: true, defaultValue: false } });
   expect(reordered.project.rooms.find((room: { name: string }) => room.name === 'Test 1').sceneState).toEqual({ doorOpen: { value: true, defaultValue: false }, score: { value: 42, defaultValue: 5 }, clue: { value: 'moon', defaultValue: 'sun' } });
-  expect(exportedElements.find((item: { id: string }) => item.id === 'element_star')).toMatchObject({ bounds: { x: 300 } });
+  expect(exportedElements.find((item: { game_id: string }) => item.game_id === 'element_star')).toMatchObject({ bounds: { x: 300 } });
   expect(exportedElements.every((item: { inspect?: string }) => item.inspect === undefined)).toBe(true);
-  expect(exportedElements.map((item: { name: string }) => item.name)).toEqual(['Star', 'Moonlight', 'Element', 'Moonlight']);
-  expect(new Set(exportedElements.map((item: { id: string }) => item.id)).size).toBe(exportedElements.length);
+  expect(exportedElements.map((item: { element_id: string }) => item.element_id)).toEqual(['Star', 'Moonlight', 'Element', 'Moonlight']);
+  expect(exportedElements.map((item: { name: string }) => item.name)).toEqual(['Star', 'Moon', 'Element', 'Element 2']);
+  expect(new Set(exportedElements.map((item: { game_id: string }) => item.game_id)).size).toBe(exportedElements.length);
   expect(exportedElements.slice(-2).map((item: { bounds: { x: number; y: number; width: number; height: number } }) => item.bounds)).toEqual([
     { x: 560, y: 310, width: 160, height: 100 }, { x: 560, y: 310, width: 160, height: 100 },
   ]);

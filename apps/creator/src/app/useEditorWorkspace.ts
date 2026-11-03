@@ -10,6 +10,7 @@ import { forgetRecentProject, openRecentProject, readLocalProject, requireEmptyF
 import { desktopRoot } from '../data/desktopFileHandles';
 import type { EditorView } from './editorViews';
 import { workspaceReadiness } from './workspaceReadiness';
+import { openScenePlayWindow } from './scenePlayBridge';
 
 export type { EditorView } from './editorViews';
 export interface PreviewSession { project: Project; urls: ReadonlyMap<string, string>; run: number }
@@ -143,6 +144,10 @@ export function useEditorWorkspace() {
       const next = structuredClone(fresh);
       const target = next.project.rooms.find(scene => scene.id === selectedRoom.id);
       if (!target) throw new Error('The selected scene no longer exists.');
+      if (target.backgroundAssetId !== asset.id) {
+        if (target.walkableArea) target.walkableArea.path = '';
+        target.elements.forEach(element => { if (element.type === 'overlay' && element.media) element.media.path = ''; });
+      }
       target.backgroundAssetId = asset.id;
       await writeLocalProject(handle, next, fresh);
       lastWritten.current = next; workspaceRef.current = next; revision.current++;
@@ -283,11 +288,17 @@ export function useEditorWorkspace() {
     copy.startRoomId = room.id;
     setPreview({ project: copy, urls, run: ++run.current });
   };
+  const playScene = () => {
+    if (!ready || !workspace || !room) return;
+    const copy = structuredClone(workspace.project);
+    copy.startRoomId = room.id;
+    openScenePlayWindow({ project: copy, urls }, setMessage);
+  };
 
   return { workspace, directory, projectRoot: window.pcagDesktop && folderHandle.current ? desktopRoot(folderHandle.current) : null, loading, choosingProject, saving, create, openDirectory, showWelcome, closeProject, returnToProject, view, setView, selectedPath, setSelectedPath, selectedSceneId, setSelectedSceneId,
     message, messageId: messageEvent?.id, setMessage, loadDiagnostics, exportBusy, preview, setPreview, past, future,
     projectResult, filesPresent, resolutionValid, ready, room, urls,
-    edit, undo, redo, refreshLocalProject, chooseSceneBackground, exportProject, open, exportCurrent, startPreview };
+    edit, undo, redo, refreshLocalProject, chooseSceneBackground, exportProject, open, exportCurrent, startPreview, playScene };
 }
 
 export type EditorController = ReturnType<typeof useEditorWorkspace>;

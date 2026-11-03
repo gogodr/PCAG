@@ -10,7 +10,10 @@
   <body>
     <main aria-label="Adventure player">
       <div id="stage" role="img" aria-label="Moonlit mountain landscape"></div>
+      <div id="loading-cover" aria-hidden="true"></div>
+      <label id="debug-toggle"><input id="debug-walk-path" type="checkbox" />Debug walk path</label>
       <p id="status" class="sr-only" role="status">Loading game view...</p>
+      <p id="action-hint" role="status"></p>
       <p id="observation" role="status" hidden></p>
     </main>
     <noscript>Enable JavaScript to open PCAG Player.</noscript>

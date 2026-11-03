@@ -8,6 +8,7 @@ import { ProjectView } from '../views/ProjectView';
 import { ScenesView } from '../views/ScenesView';
 import { WelcomeView } from '../views/WelcomeView';
 import type { EditorView } from './editorViews';
+import { ScenePlayWindow } from './ScenePlayWindow';
 
 type Editor = ReturnType<typeof useEditorWorkspace>;
 const AnimationsView = lazy(() => import('../views/AnimationsView').then(module => ({ default: module.AnimationsView })));
@@ -24,6 +25,11 @@ function ActiveView({ editor, view }: { editor: Editor; view: EditorView }) {
 }
 
 export function CreatorApp() {
+  if (new URLSearchParams(window.location.search).has('scene-play')) return <ScenePlayWindow />;
+  return <CreatorEditor />;
+}
+
+function CreatorEditor() {
   const editor = useEditorWorkspace();
   const [animationsOpened, setAnimationsOpened] = useState(false);
   useEffect(() => { if (editor.view === 'Animations') setAnimationsOpened(true); }, [editor.view]);

@@ -61,7 +61,8 @@ test('project export, reopen, invalid-file preservation, and independent HTTP pl
   const savedWorkspace = readWorkspaceArchive(savedBytes);
   const savedProject = savedWorkspace.project;
   expect(savedProject.rooms[0].elements[0].name).toBe('Element');
-  expect(savedProject.rooms[0].elements[0].id).toMatch(/^id_/);
+  expect(savedProject.rooms[0].elements[0].game_id).toMatch(/^id_/);
+  expect(savedProject.rooms[0].elements[0].element_id).toBe('Element');
   expect(savedProject.rooms[0].sceneState).toEqual({ doorOpen: { value: true, defaultValue: false } });
   expect(savedProject.gameState).toEqual({ score: { value: 7, defaultValue: 2 } });
 
@@ -130,6 +131,9 @@ test('project export, reopen, invalid-file preservation, and independent HTTP pl
     if (!address || typeof address === 'string') throw new Error('Export test server has no port.');
     await page.goto(`http://127.0.0.1:${address.port}/`);
     await expect(page.getByRole('status').first()).toHaveText('Game view ready.');
+    await expect(page.getByLabel('Debug walk path')).toBeVisible();
+    await page.getByLabel('Debug walk path').check();
+    await page.getByLabel('Debug walk path').uncheck();
     const canvas = page.locator('#stage canvas');
     const box = await canvas.boundingBox();
     if (!box) throw new Error('Exported canvas has no box.');

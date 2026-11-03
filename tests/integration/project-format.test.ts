@@ -4,13 +4,17 @@ import test from 'node:test';
 import { createId, parseProject, validateProject } from '../../packages/project-format/src/index.ts';
 import { createInitialSessionState } from '../../packages/runtime/src/state.ts';
 import { parseAnimationAtlas } from '../../packages/animation-atlas/src/index.ts';
-import { matchingEvents, stateChangeTriggers } from '../../packages/scene-events/src/index.ts';
+import { initialEventScript, matchingEvents, positionTriggerWarning, stateChangeTriggers, withPositionTriggerWarning } from '../../packages/scene-events/src/index.ts';
+import { createLatestEventQueue } from '../../packages/scene-events/src/latest-event-queue.ts';
+import { walkableDestination, walkablePath, walkableScale } from '../../packages/runtime/src/player-navigation.ts';
 import type { Diagnostic, Project } from '../../packages/project-format/src/index.ts';
 
 const json = readFileSync(new URL('../../examples/reference-adventure/project.json', import.meta.url), 'utf8');
 const sample = (): Project => {
-  const project = JSON.parse(json) as Project;
-  project.rooms[0]!.elements.push({ id: 'element_fixture', name: 'Fixture element', bounds: { x: 100, y: 100, width: 100, height: 100 } });
+  const parsed = parseProject(json);
+  if (!parsed.ok) throw new Error(JSON.stringify(parsed.diagnostics));
+  const project = parsed.project;
+  project.rooms[0]!.elements.push({ game_id: 'element_fixture', element_id: 'Fixture element', name: 'Fixture element', bounds: { x: 100, y: 100, width: 100, height: 100 } });
   return project;
 };
 function failure(value: unknown, code: Diagnostic['code'], path: string) {
@@ -33,6 +37,53 @@ test('valid sample loads its start room and survives a JSON round trip', () => {
   assert.deepEqual(parseProject(JSON.stringify(result.project)), result);
 });
 
+test('legacy element IDs and names migrate to game_id, element_id, and name', () => {
+  const project = sample();
+  const old = project.rooms[0]!.elements.at(-1)!;
+  const { game_id, element_id, name: _name, ...rest } = old;
+  const legacy = { ...rest, id: game_id, name: element_id };
+  const input = structuredClone(project) as unknown as { rooms: { elements: unknown[] }[] };
+  input.rooms[0]!.elements[input.rooms[0]!.elements.length - 1] = legacy;
+  const result = validateProject(input);
+  assert.ok(result.ok, JSON.stringify(result.diagnostics));
+  const migrated = result.project.rooms[0]!.elements.at(-1)!;
+  assert.deepEqual([migrated.game_id, migrated.element_id, migrated.name], [game_id, element_id, element_id]);
+  assert.equal(Object.hasOwn(migrated, 'id'), false);
+  assert.deepEqual(input.rooms[0]!.elements.at(-1), legacy);
+});
+
+test('Player anchor and editor lock round trip; invalid anchors are rejected', () => {
+  const project = sample();
+  project.rooms[0]!.player = { characterId: '', position: { x: 300, y: 400 }, anchor: { x: 0.25, y: 0.75 }, scale: 1, layer: 0, locked: true };
+  const result = validateProject(project);
+  assert.ok(result.ok, JSON.stringify(result.diagnostics));
+  assert.deepEqual(result.project.rooms[0]!.player?.anchor, { x: 0.25, y: 0.75 });
+  assert.equal(result.project.rooms[0]!.player?.locked, true);
+  assert.ok(parseProject(JSON.stringify(result.project)).ok);
+  project.rooms[0]!.player!.anchor!.x = 1.1;
+  failure(project, 'invalid_value', '/rooms/0/player/anchor/x');
+});
+
+test('Overlay fills its scene, uses image media, and cannot have player actions', () => {
+  const project = sample();
+  const room = project.rooms[0]!;
+  room.elements.push({ game_id: 'overlay_fixture', element_id: 'Foreground', type: 'overlay', bounds: { x: 0, y: 0, width: room.width, height: room.height }, media: { path: 'images/foreground.png', kind: 'image', width: 1376, height: 768, preserveAspectRatio: true, loop: true, reverse: false } });
+  const result = validateProject(project);
+  assert.ok(result.ok, JSON.stringify(result.diagnostics));
+  assert.deepEqual(result.project.rooms[0]!.elements.at(-1)!.availableActions, []);
+  assert.equal(Object.hasOwn(result.project.rooms[0]!.elements.at(-1)!, 'name'), false);
+  assert.ok(parseProject(JSON.stringify(result.project)).ok);
+  const wrongBounds = structuredClone(project);
+  wrongBounds.rooms[0]!.elements.at(-1)!.bounds.x = 1;
+  failure(wrongBounds, 'invalid_value', `/rooms/0/elements/${room.elements.length - 1}/bounds`);
+  const wrongMedia = structuredClone(project);
+  wrongMedia.rooms[0]!.elements.at(-1)!.media!.kind = 'animation';
+  failure(wrongMedia, 'invalid_value', `/rooms/0/elements/${room.elements.length - 1}/media/kind`);
+  const actions = structuredClone(project);
+  actions.rooms[0]!.elements.at(-1)!.availableActions = ['view'];
+  failure(actions, 'invalid_value', `/rooms/0/elements/${room.elements.length - 1}/availableActions`);
+});
+
 test('older hotspot lists load as elements without changing the source', () => {
   const legacy = JSON.parse(json);
   legacy.rooms[0].hotspots = legacy.rooms[0].elements;
@@ -46,24 +97,111 @@ test('older hotspot lists load as elements without changing the source', () => {
   assert.ok(parseProject(JSON.stringify(result.project)).ok);
 });
 
+test('element available actions normalize, round trip, and reject unsupported or duplicate actions', () => {
+  const legacy = sample();
+  const normalized = validateProject(legacy);
+  assert.ok(normalized.ok);
+  assert.deepEqual(normalized.project.rooms[0]!.elements.at(-1)!.availableActions, ['view']);
+  assert.equal(legacy.rooms[0]!.elements.at(-1)!.availableActions, undefined);
+  const project = sample();
+  project.rooms[0]!.elements.at(-1)!.availableActions = ['view', 'open', 'use'];
+  const parsed = validateProject(project);
+  assert.ok(parsed.ok);
+  assert.deepEqual(parsed.project.rooms[0]!.elements.at(-1)!.availableActions, ['view', 'open', 'use']);
+  assert.deepEqual(parseProject(JSON.stringify(parsed.project)), parsed);
+  const invalid = structuredClone(project);
+  invalid.rooms[0]!.elements.at(-1)!.availableActions = ['view', 'view'];
+  failure(invalid, 'invalid_value', `/rooms/0/elements/${invalid.rooms[0]!.elements.length - 1}/availableActions/1`);
+  invalid.rooms[0]!.elements.at(-1)!.availableActions = ['view', 'dance' as 'view'];
+  failure(invalid, 'invalid_value', `/rooms/0/elements/${invalid.rooms[0]!.elements.length - 1}/availableActions/1`);
+});
+
+test('Player and Walkable Area normalize, validate, and round trip per scene', () => {
+  const old = sample();
+  delete old.rooms[0]!.player;
+  delete old.rooms[0]!.walkableArea;
+  const normalized = validateProject(old);
+  assert.ok(normalized.ok);
+  assert.equal(normalized.project.rooms[0]!.player?.layer, old.rooms[0]!.elements.length);
+  assert.deepEqual(normalized.project.rooms[0]!.walkableArea, { path: '', minScale: 0.5, maxScale: 1.5 });
+  const project = sample();
+  project.characters = [{ id: 'character_player', name: 'Player', referenceAssetId: project.assets[0]!.id, animations: [] }];
+  project.rooms[0]!.player = { characterId: 'character_player', position: { x: 123, y: 456 }, scale: 1.2, layer: 0 };
+  project.rooms[0]!.walkableArea = { path: 'images/walkable.png', minScale: 0.6, maxScale: 1.4 };
+  const parsed = validateProject(project);
+  assert.ok(parsed.ok);
+  assert.deepEqual(parseProject(JSON.stringify(parsed.project)), parsed);
+  const missing = structuredClone(project);
+  missing.rooms[0]!.player!.characterId = 'missing';
+  failure(missing, 'missing_reference', '/rooms/0/player/characterId');
+  const badLayer = structuredClone(project);
+  badLayer.rooms[0]!.player!.layer = 99;
+  failure(badLayer, 'invalid_value', '/rooms/0/player/layer');
+  const badScale = structuredClone(project);
+  badScale.rooms[0]!.walkableArea!.minScale = 2;
+  failure(badScale, 'invalid_value', '/rooms/0/walkableArea/maxScale');
+});
+
+test('Walkable Area alpha blocks movement and grayscale controls player scale', () => {
+  const mask = { width: 4, height: 1, minScale: 0.5, maxScale: 1.5, data: new Uint8ClampedArray([0, 0, 0, 255, 128, 128, 128, 255, 255, 255, 255, 255, 0, 0, 0, 0]) };
+  assert.equal(walkableScale(mask, 0, 0), 1.5);
+  assert.ok(Math.abs(walkableScale(mask, 1, 0)! - 1) < 0.01);
+  assert.ok(Math.abs(walkableScale(mask, 2, 0)! - 0.5) < 0.001);
+  assert.equal(walkableScale(mask, 3, 0), null);
+  assert.equal(walkableScale({ ...mask, sceneWidth: 8 }, 7, 0), null);
+  const destination = walkableDestination(mask, { x: 0, y: 0 }, { x: 3, y: 0 });
+  assert.ok(destination && destination.x >= 2 && destination.x < 2.5);
+  const data = new Uint8ClampedArray(5 * 5 * 4);
+  for (let y = 0; y < 5; y++) for (let x = 0; x < 5; x++) data[(y * 5 + x) * 4 + 3] = x === 2 && y < 4 ? 0 : 255;
+  const barrier = { width: 5, height: 5, minScale: 1, maxScale: 1, data };
+  const route = walkablePath(barrier, { x: 0, y: 0 }, { x: 4, y: 0 });
+  assert.ok(route.length > 1);
+  assert.deepEqual(route.at(-1), { x: 4, y: 0 });
+  let previous = { x: 0, y: 0 };
+  for (const next of route) { assert.deepEqual(walkableDestination(barrier, previous, next), next); previous = next; }
+});
+
 test('SceneManager events round trip and validate player targets', () => {
   const legacy = parseProject(json);
   assert.ok(legacy.ok);
   assert.deepEqual(legacy.project.rooms[0]!.sceneManager, { events: [] });
   const project = sample();
-  const targetId = project.rooms[0]!.elements.at(-1)!.id;
+  const targetId = project.rooms[0]!.elements.at(-1)!.game_id;
   project.rooms[0]!.sceneManager = { events: [{
     id: 'event_fixture', name: 'Open door',
-    triggers: [{ kind: 'scene_load' }, { kind: 'player_action', action: 'use', targetId, itemId: 'inventory_key' }],
+    triggers: [{ kind: 'scene_load' }, { kind: 'player_action', action: 'use', targetId, itemId: 'inventory_key' }, { kind: 'character_position' }],
     script: 'function on_event_fixture(scene, game, trigger) { game.state.open = true; }',
   }] };
   const result = validateProject(project);
   assert.ok(result.ok);
   assert.deepEqual(result.project.rooms[0]!.sceneManager, project.rooms[0]!.sceneManager);
   assert.deepEqual(parseProject(JSON.stringify(result.project)), result);
+  assert.deepEqual(matchingEvents(result.project.rooms[0]!.sceneManager!.events, { type: 'character_position', x: 12, y: 34, phase: 'move' }).map(event => event.id), ['event_fixture']);
+  assert.match(initialEventScript('event_fixture'), /\nasync function on_event_fixture\(/);
+  const warned = withPositionTriggerWarning('event_fixture', initialEventScript('event_fixture'));
+  assert.ok(warned.includes(positionTriggerWarning));
+  assert.equal(withPositionTriggerWarning('event_fixture', warned), warned);
+  assert.doesNotThrow(() => new Function(withPositionTriggerWarning('event_fixture', 'function on_event_fixture(scene, game, trigger) { if (trigger.phase === "end") scene.state.open = true; }')));
   const invalid = structuredClone(project);
   (invalid.rooms[0]!.sceneManager!.events[0]!.triggers[1] as { targetId: string }).targetId = 'missing';
   failure(invalid, 'missing_reference', '/rooms/0/sceneManager/events/0/triggers/1/targetId');
+});
+
+test('each event retains only its latest pending signal while another event can run', async () => {
+  const calls: string[] = [];
+  let releaseFirst!: () => void;
+  const first = new Promise<void>(resolve => { releaseFirst = resolve; });
+  const eventQueue = createLatestEventQueue<string>(async (id, value) => {
+    calls.push(`${id}:${value}`);
+    if (id === 'a' && value === 'first') await first;
+  }, (_id, error) => { throw error; });
+  eventQueue.signal('a', 'first');
+  eventQueue.signal('a', 'second');
+  eventQueue.signal('a', 'latest');
+  eventQueue.signal('b', 'independent');
+  releaseFirst();
+  await eventQueue.whenIdle();
+  assert.deepEqual(calls, ['a:first', 'b:independent', 'a:latest']);
 });
 
 test('state-change triggers match their declared scope and carry old and new values', () => {
@@ -214,8 +352,8 @@ test('deleting an asset exposes its reference instead of choosing another', () =
 });
 
 test('duplicate IDs across entity kinds are rejected', () => {
-  const project = sample(); project.rooms[0]!.elements[0]!.id = project.assets[0]!.id;
-  const diagnostic = failure(project, 'duplicate_id', '/rooms/0/elements/0/id');
+  const project = sample(); project.rooms[0]!.elements[0]!.game_id = project.assets[0]!.id;
+  const diagnostic = failure(project, 'duplicate_id', '/rooms/0/elements/0/game_id');
   assert.equal(diagnostic.target.roomId, 'room_lake');
 });
 
@@ -235,8 +373,8 @@ test('element geometry points to the affected field and owner', () => {
 test('legacy boxes and authored shape and image elements round trip', () => {
   const project = sample();
   const room = project.rooms[0]!;
-  room.elements.push({ id: 'shape_fixture', name: 'Shape', type: 'shape', bounds: { x: 200, y: 200, width: 100, height: 100 }, vertices: [{ x: 200, y: 200 }, { x: 300, y: 200 }, { x: 300, y: 300 }, { x: 200, y: 300 }] });
-  room.elements.push({ id: 'image_fixture', name: 'Image', type: 'image', bounds: { x: 400, y: 200, width: 100, height: 100 }, media: { path: 'images/sign.png', kind: 'image', width: 100, height: 100, scale: 1, preserveAspectRatio: true, loop: true, reverse: false } });
+  room.elements.push({ game_id: 'shape_fixture', element_id: 'Shape', name: 'Shape', type: 'shape', bounds: { x: 200, y: 200, width: 100, height: 100 }, vertices: [{ x: 200, y: 200 }, { x: 300, y: 200 }, { x: 300, y: 300 }, { x: 200, y: 300 }] });
+  room.elements.push({ game_id: 'image_fixture', element_id: 'Image', name: 'Image', type: 'image', bounds: { x: 400, y: 200, width: 100, height: 100 }, media: { path: 'images/sign.png', kind: 'image', width: 100, height: 100, scale: 1, preserveAspectRatio: true, loop: true, reverse: false } });
   const result = validateProject(project);
   assert.ok(result.ok);
   assert.equal(result.project.rooms[0]!.elements[0]!.type, 'box');
@@ -250,7 +388,7 @@ test('legacy boxes and authored shape and image elements round trip', () => {
   assert.equal(upgraded.project.rooms[0]!.elements[2]!.media?.scale, undefined);
   const editedLegacy = structuredClone(project);
   editedLegacy.rooms[0]!.elements[2]!.bounds = { x: 400, y: 200, width: 140, height: 60 };
-  editedLegacy.rooms[0]!.elements.push({ ...structuredClone(editedLegacy.rooms[0]!.elements[2]!), id: 'image_fixture_2', bounds: { x: 600, y: 200, width: 80, height: 120 } });
+  editedLegacy.rooms[0]!.elements.push({ ...structuredClone(editedLegacy.rooms[0]!.elements[2]!), game_id: 'image_fixture_2', bounds: { x: 600, y: 200, width: 80, height: 120 } });
   const migrated = validateProject(editedLegacy);
   assert.ok(migrated.ok);
   assert.deepEqual(migrated.project.rooms[0]!.elements.slice(-2).map(element => element.bounds), editedLegacy.rooms[0]!.elements.slice(-2).map(element => element.bounds));

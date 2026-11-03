@@ -13,13 +13,20 @@ export function scriptEditorTypes(sceneState: StateVariables, gameState: StateVa
   return `type StateValue = boolean | number | string;
 interface TriggerContext {
   action?: string;
-  type?: 'scene_variable_change' | 'game_variable_change';
+  type?: 'scene_variable_change' | 'game_variable_change' | 'character_position';
+  x?: number;
+  y?: number;
+  phase?: 'start' | 'move' | 'end';
   item?: string;
   target?: string;
   old_value?: StateValue;
   value?: StateValue;
 }
 interface SceneElement {
+  /** Play once to its last frame, or start its loop. Resolves when a single run finishes. */
+  playAnimation(): Promise<void>;
+  /** Stop playback and show its first frame. */
+  stopAnimation(): Promise<void>;
   disabled: boolean;
   visible: boolean;
   source: { type: 'IMAGE' | 'ANIMATION' | 'BOX' | 'SHAPE'; uri: string };

@@ -13,7 +13,7 @@ export function useAssetActions(editor: EditorController) {
   const isRoot = (path: string) => ROOT_FOLDERS.includes(path as typeof ROOT_FOLDERS[number]);
   const supports = (path: string, mime: string) => allowedMime(path) === mime || (mime === 'application/octet-stream' && !allowedMime(path));
   const replacement = (source: string, target: string) => (path: string) => path === source ? target : path.startsWith(`${source}/`) ? `${target}${path.slice(source.length)}` : path;
-  const elementPaths = workspace?.project.rooms.flatMap(room => room.elements.flatMap(element => element.type === 'image' && element.media?.path ? [element.media.path] : [])) ?? [];
+  const elementPaths = workspace?.project.rooms.flatMap(room => [...room.elements.flatMap(element => (element.type === 'image' || element.type === 'overlay') && element.media?.path ? [element.media.path] : []), ...(room.walkableArea?.path ? [room.walkableArea.path] : [])]) ?? [];
   const elementCompanions = workspace?.project.rooms.flatMap(room => room.elements.flatMap(element => {
     if (element.type !== 'image' || element.media?.kind !== 'animation') return [];
     const atlas = workspace.files.find(file => file.path === element.media?.path);
@@ -55,6 +55,7 @@ export function useAssetActions(editor: EditorController) {
     if (affected.some(file => file.path !== source && exists(replace(file.path)))) { setMessage('An atlas companion name is already used in the destination folder.'); return false; }
     if (affected.some(file => !supports(replace(file.path), file.mime))) { setMessage('The destination folder does not support this file type.'); return false; }
     if (!copy && workspace.project.rooms.some(scene => affected.some(file => file.id === scene.backgroundAssetId)) && rootOf(target) !== 'backgrounds') { setMessage('A scene background must stay in the backgrounds folder.'); return false; }
+    if (!copy && workspace.project.rooms.some(scene => scene.walkableArea?.path && affected.some(file => file.path === scene.walkableArea!.path)) && rootOf(target) !== 'images') { setMessage('A Walkable Area image must stay in Images.'); return false; }
     edit(next => {
       const folders = next.folders.filter(path => path === source || path.startsWith(`${source}/`)).map(replace);
       if (copy) {
@@ -69,7 +70,7 @@ export function useAssetActions(editor: EditorController) {
         next.files = next.files.map(file => ({ ...file, path: replace(file.path) }));
         next.project.assets = next.project.assets.map(asset => ({ ...asset, path: replace(asset.path), name: asset.path === source ? basename(target) : asset.name }));
         next.project.characters?.forEach(character => character.animations.forEach(animation => { animation.path = replace(animation.path); }));
-        next.project.rooms.forEach(room => room.elements.forEach(element => { if (element.type === 'image' && element.media?.path) element.media.path = replace(element.media.path); }));
+        next.project.rooms.forEach(room => { room.elements.forEach(element => { if ((element.type === 'image' || element.type === 'overlay') && element.media?.path) element.media.path = replace(element.media.path); }); if (room.walkableArea?.path) room.walkableArea.path = replace(room.walkableArea.path); });
       }
     });
     setSelectedPath(target);
@@ -90,7 +91,7 @@ export function useAssetActions(editor: EditorController) {
       next.files = next.files.map(file => ({ ...file, path: replace(file.path) }));
       next.project.assets = next.project.assets.map(asset => ({ ...asset, path: replace(asset.path), name: asset.path === source ? name : asset.name }));
       next.project.characters?.forEach(character => character.animations.forEach(animation => { animation.path = replace(animation.path); }));
-      next.project.rooms.forEach(room => room.elements.forEach(element => { if (element.type === 'image' && element.media?.path) element.media.path = replace(element.media.path); }));
+      next.project.rooms.forEach(room => { room.elements.forEach(element => { if ((element.type === 'image' || element.type === 'overlay') && element.media?.path) element.media.path = replace(element.media.path); }); if (room.walkableArea?.path) room.walkableArea.path = replace(room.walkableArea.path); });
     });
     setSelectedPath(path);
     return true;

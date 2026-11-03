@@ -1,5 +1,15 @@
 # Rebuild validation log
 
+On 2026-11-01, the Player canvas marker stopped inheriting the app-wide button hover and pressed transforms. Its feet anchor remains fixed while dragging, and the marker follows pointer movement before one undoable position edit on release. `npm run build` and the focused drag browser check passed in production and development.
+
+On 2026-10-31–2026-11-01, scenes gained static Player and Walkable Area records. The Player row reorders among elements without element flag or context controls; its inspector selects a character and edits initial feet position and scale. The Walkable Area inspector imports a background-sized PNG and sets min/max scale. Preview loads directional walk sprites, routes background clicks through nontransparent pixels, and samples grayscale under the player's feet for scale. Older rooms normalize with an unassigned Player and empty mask. `npm run build`, all 41 format checks, all 29 production browser checks, and three focused development browser checks passed. R01 remains in progress.
+
+On 2026-10-31, each element gained an Available Actions list in the inspector. View is the default for new and older elements; authors can select any combination of the nine supported player actions. The player click area follows View availability. Validation rejects unknown or repeated actions, and the list survives project export. `npm run typecheck`, `npm run test:format` (39 checks), and `npm run build` passed.
+
+On 2026-10-31, the scene canvas stopped advancing Single run animation elements on load. They display the first frame, or the last frame when Reverse is selected. Loop animations still advance automatically. `npm run build` passed, and the animation atlas browser case passed in production and development, including a canvas remount with Single run selected.
+
+SceneManager events gained SceneState and GameState variable-change triggers on 2026-10-31. Trigger selection follows variable renames and blocks deletion of referenced variables. Runtime scripts emit `{type, target, old_value, value}` after a declared value changes; a per-dispatch execution budget stops cycles. `npm run test:format` passed 38 checks, `npm run build` passed, and the production browser chain from Scene Load through both variable scopes passed.
+
 The authored hotspot concept was renamed to element on 2026-10-31. New projects and exports write `rooms[].elements`; the project reader accepts older `rooms[].hotspots` without changing source data. Editor, runtime, diagnostics, and current UI terminology use element. SceneManager completion now lists each scene element by name after `scene.elements.` and inserts a bracket reference for names containing spaces. The format suite passed 37 checks; production build and focused SceneManager and editor-name browser checks passed.
 
 The SceneManager script editor gained a Monaco theme based on the creator palette and context-aware JavaScript completions on 2026-10-31. The editor derives SceneState and GameState property types from the current project, and scoped completion providers suggest `scene.state`, `scene.elements`, and the available state variable names. `npm run build` passed. The SceneManager authoring and new completion browser tests passed in production and development (four cases).
@@ -81,3 +91,23 @@ Statuses: Not started -> In progress -> Awaiting user validation -> Accepted. Us
 ## Milestone gates
 
 M0: passed on 2026-10-23 before F06 changes. `npm run check` built both applications and passed 28 format tests plus 14 Chromium browser checks, including edit, preview, save/reopen, and an exported ZIP served over independent HTTP. F01-F05 were accepted. M1-M5 are not run; M6 remains future expansion. No archived test result counts as a rebuild pass.
+
+2026-11-01: Overlay authoring added during R01. Overlays share element drag order, require a background-sized image, pass pointer input through in editor and player, and support enable/visibility controls. `npm run test:format` passed 42 tests; `npm run build` passed; the production Chromium suite passed 31 tests, including preview click-through.
+
+2026-11-01: Scene canvas Play scene opens the selected scene in its own window using the current editor snapshot and the game preview runtime. `npm run build`, the focused production Chromium popup test, and the focused Electron window test passed.
+
+2026-11-01: Verified Overlay click-through in the scene player with the Overlay at the top of the render order. The focused production Chromium checks passed for both clicking an underlying Box and clicking the background to move Player.
+
+2026-11-01: Generated a transparent nine-action pixel-art cursor sheet and added native player cursors, hover action hints, wheel cycling, and click dispatch for every authored action. `npm run build` and the focused production Chromium cursor test passed, including View/Move to/first-action defaults and a Use trigger that changes the scene. Four targeted production regressions passed for SceneManager, movement, Overlay click-through, and exported player; the Electron scene window test passed.
+
+2026-11-01: Added a code-drawn hollow crosshair for transparent Walkable Area pixels and elements with zero available actions. Both paths suppress clicks, including background walking. `npm run build` and the focused production Chromium movement test passed for blocked clicks followed by a valid walk.
+
+2026-11-01: Empty walkable ground now shows `Move to here`; empty nonwalkable ground keeps the hollow crosshair but clears the hint text. Elements with no actions also show no hint text.
+
+2026-11-01: Corrected hover priority so element actions work even when their bounds overlap nonwalkable pixels. Empty nonwalkable ground remains blocked, and no-action elements leave the hint blank. `npm run build`, two focused production Chromium interaction tests, and the exported standalone player test passed.
+
+2026-11-01: Added a session-only Debug walk path checkbox to both player shells. Accepted move requests draw start/end markers and the planned route; disabling clears them. Replaced the empty cursor and scene element icons with generated transparent pixel-art assets. `npm run build`, focused production Chromium movement, icon, scene-window and exported-player tests, and the Electron scene-window test passed.
+
+2026-11-01: Player inspector now previews every configured animation and edits a normalized sprite anchor. The editor canvas and runtime place the sprite by that anchor; older scenes default to bottom center. The selected canvas Player shows its anchor point. `npm run test:format` passed 43 tests, `npm run build` passed, and three focused production Chromium Player checks passed.
+
+2026-11-01: SceneManager cards became compact and collapsible. Character position scripts receive start, 200 ms movement samples, and end positions, with a live-evaluation comment in the function. Runtime events now have separate latest-pending slots per event while shared state changes remain serialized. `npm run test:format` passed 44 tests; `npm run build` and focused production Chromium authoring, state-chain, and movement checks passed.

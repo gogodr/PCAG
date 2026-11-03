@@ -116,7 +116,8 @@ export function parseWorkspace(text: string, trustedSvgData: ReadonlySet<string>
   }
   if (result.project.assets.some(asset => !filePaths.has(asset.path))) return { ok: false, message: 'A project image is missing from the workspace files. The current project was kept.' };
   if (result.project.characters?.some(character => character.animations.some(animation => !filePaths.has(animation.path)))) return { ok: false, message: 'A character animation is missing from the workspace files. The current project was kept.' };
-  if (result.project.rooms.some(room => room.elements.some(element => element.type === 'image' && element.media?.path && !filePaths.has(element.media.path)))) return { ok: false, message: 'An element image or animation is missing from the workspace files. The current project was kept.' };
+  if (result.project.rooms.some(room => room.elements.some(element => (element.type === 'image' || element.type === 'overlay') && element.media?.path && !filePaths.has(element.media.path)))) return { ok: false, message: 'An element image or animation is missing from the workspace files. The current project was kept.' };
+  if (result.project.rooms.some(room => room.walkableArea?.path && !filePaths.has(room.walkableArea.path))) return { ok: false, message: 'A Walkable Area image is missing from the workspace files. The current project was kept.' };
   if (result.project.rooms.some(room => room.elements.some(element => {
     if (element.type !== 'image' || element.media?.kind !== 'animation' || !element.media.path) return false;
     const atlas = (input.files as WorkspaceFile[]).find(file => file.path === element.media!.path);
@@ -131,5 +132,5 @@ export function parseWorkspace(text: string, trustedSvgData: ReadonlySet<string>
 export function newScene(workspace: Workspace): Project['rooms'][number] {
   const background = workspace.project.assets.find(asset => asset.path.startsWith('backgrounds/'));
   if (!background) throw new Error('Add a background image before creating a scene.');
-  return { id: createId(), name: `Scene ${workspace.project.rooms.length + 1}`, width: workspace.targetWidth, height: workspace.targetHeight, backgroundAssetId: background.id, elements: [], sceneState: {}, sceneManager: { events: [] } };
+  return { id: createId(), name: `Scene ${workspace.project.rooms.length + 1}`, width: workspace.targetWidth, height: workspace.targetHeight, backgroundAssetId: background.id, elements: [], player: { characterId: '', position: { x: Math.round(workspace.targetWidth / 2), y: Math.round(workspace.targetHeight * 0.85) }, anchor: { x: 0.5, y: 1 }, scale: 1, layer: 0 }, walkableArea: { path: '', minScale: 0.5, maxScale: 1.5 }, sceneState: {}, sceneManager: { events: [] } };
 }

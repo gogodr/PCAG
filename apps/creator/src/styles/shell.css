@@ -23,8 +23,8 @@
 .topbar-description { margin: 8px 0 0; color: var(--muted); font-size: 13px; }
 .scene-switcher { display: flex; align-items: center; gap: 8px; }
 .scene-switcher select, .scene-switcher input { width: clamp(150px, 20vw, 260px); min-width: 0; margin: 0; font-size: 14px; }
-.topbar .scene-switcher .scene-icon-button { display: grid; place-items: center; width: 34px; height: 34px; flex: none; padding: 0; }
-.scene-icon-button svg { width: 21px; height: 21px; fill: currentColor; }
+.topbar .scene-switcher .scene-icon-button { display: grid; place-items: center; box-sizing: border-box; width: 42px; min-width: 42px; height: 42px; min-height: 42px; flex: none; padding: 0; }
+.scene-switcher .scene-icon-button .ui-icon { width: 24px; height: 24px; }
 h1 { margin: 0; font-size: clamp(25px, 2.6vw, 32px); font-weight: 650; line-height: 1.15; letter-spacing: -.035em; }
 h2 { margin: 0 0 10px; font-size: 18px; font-weight: 650; letter-spacing: -.02em; }
 h3 { margin: 25px 0 8px; font-size: 14px; }

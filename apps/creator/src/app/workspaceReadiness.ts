@@ -9,8 +9,9 @@ export function workspaceReadiness(workspace: Workspace | null) {
   const filePaths = new Set(workspace.files.map(file => file.path));
   const filesPresent = workspace.project.assets.every(asset => filePaths.has(asset.path))
     && (workspace.project.characters ?? []).every(character => character.animations.every(animation => filePaths.has(animation.path)))
+    && workspace.project.rooms.every(room => !room.walkableArea?.path || filePaths.has(room.walkableArea.path))
     && workspace.project.rooms.every(room => room.elements.every(element => {
-      if (element.type !== 'image' || !element.media?.path) return true;
+      if (element.type !== 'image' && element.type !== 'overlay' || !element.media?.path) return true;
       if (!filePaths.has(element.media.path)) return false;
       if (element.media.kind !== 'animation') return true;
       const atlas = workspace.files.find(file => file.path === element.media!.path);

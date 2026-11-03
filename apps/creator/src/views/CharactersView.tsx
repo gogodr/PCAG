@@ -109,7 +109,9 @@ export function CharactersView({ editor }: { editor: EditorController }) {
     setCustomName(''); setCustomPath(''); setError('');
   };
   const removeCharacter = () => {
-    if (!selected || !window.confirm(`Delete character “${selected.name}”?`)) return;
+    if (!selected) return;
+    if (workspace?.project.rooms.some(room => room.player?.characterId === selected.id)) { setError('This character is assigned to a scene Player. Choose another character in Scenes before deleting it.'); return; }
+    if (!window.confirm(`Delete character “${selected.name}”?`)) return;
     editor.edit(next => { next.project.characters = (next.project.characters ?? []).filter(item => item.id !== selected.id); });
     setSelectedId(null);
   };

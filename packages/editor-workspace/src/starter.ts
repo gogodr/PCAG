@@ -14,7 +14,7 @@ export function starterWorkspace(name: string): Workspace {
     project: {
       schemaVersion: 1, id: projectId, name, startRoomId: sceneId, gameState: {},
       assets: [{ id: backgroundId, name: 'Blank background', kind: 'image', path }],
-      rooms: [{ id: sceneId, name: 'Scene 1', width: 1600, height: 900, backgroundAssetId: backgroundId, elements: [], sceneState: {}, sceneManager: { events: [] } }],
+      rooms: [{ id: sceneId, name: 'Scene 1', width: 1600, height: 900, backgroundAssetId: backgroundId, elements: [], player: { characterId: '', position: { x: 800, y: 765 }, anchor: { x: 0.5, y: 1 }, scale: 1, layer: 0 }, walkableArea: { path: '', minScale: 0.5, maxScale: 1.5 }, sceneState: {}, sceneManager: { events: [] } }],
     },
     folders: [...ROOT_FOLDERS],
     files: [{ id: backgroundId, path, mime: 'image/png', dataUrl: `data:image/png;base64,${blankPng}` }],

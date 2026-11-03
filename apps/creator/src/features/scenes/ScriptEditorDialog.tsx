@@ -71,13 +71,13 @@ export default function ScriptEditorDialog({ event, sceneState, gameState, eleme
         const range = new monaco.Range(position.lineNumber, word.startColumn, position.lineNumber, word.endColumn);
         if (path[1] === 'scene.elements') {
           const counts = new Map<string, number>();
-          const ids = new Set(elements.map(element => element.id));
-          for (const element of elements) counts.set(element.name, (counts.get(element.name) ?? 0) + 1);
+          const ids = new Set(elements.map(element => element.game_id));
+          for (const element of elements) counts.set(element.element_id, (counts.get(element.element_id) ?? 0) + 1);
           const bracketRange = new monaco.Range(position.lineNumber, word.startColumn - 1, position.lineNumber, word.endColumn);
           return { suggestions: elements.map((element, index) => {
-            const key = counts.get(element.name) === 1 && !ids.has(element.name) ? element.name : element.id;
+            const key = counts.get(element.element_id) === 1 && !ids.has(element.element_id) ? element.element_id : element.game_id;
             return {
-              label: element.name, detail: element.id, filterText: `.${element.name}`,
+              label: element.element_id, detail: `${element.name ?? element.element_id} (${element.game_id})`, filterText: `.${element.element_id}`,
               kind: monaco.languages.CompletionItemKind.Value,
               insertText: `[${JSON.stringify(key)}]`, range: bracketRange,
               sortText: String(index).padStart(4, '0'),
@@ -87,7 +87,7 @@ export default function ScriptEditorDialog({ event, sceneState, gameState, eleme
         const names = path[1] === 'scene' ? ['state', 'elements']
           : path[1] === 'scene.state' ? Object.keys(sceneState)
             : path[1] === 'game.state' ? Object.keys(gameState)
-              : ['type', 'action', 'target', 'item', 'old_value', 'value'];
+              : ['type', 'action', 'target', 'item', 'old_value', 'value', 'x', 'y', 'phase'];
         return { suggestions: names.map((label, index) => ({
           label, kind: monaco.languages.CompletionItemKind.Property, insertText: label, range,
           sortText: String(index).padStart(4, '0'),
@@ -109,7 +109,7 @@ export default function ScriptEditorDialog({ event, sceneState, gameState, eleme
     return () => window.removeEventListener('keydown', keydown);
   }, [onClose]);
   return <div className="scene-script-backdrop"><div className="scene-script-dialog" role="dialog" aria-modal="true" aria-label={`Script for ${event.name}`}>
-    <div className="scene-script-header"><div><h2>{event.name}</h2><p className="subtle">Edit <code>{eventFunctionName(event.id)}(scene, game, trigger)</code>. Use JavaScript <code>true</code> and <code>false</code>.</p></div><button type="button" aria-label="Close script editor" onClick={onClose}>×</button></div>
+    <div className="scene-script-header"><div><h2>{event.name}</h2><p className="subtle">Edit <code>{eventFunctionName(event.id)}(scene, game, trigger)</code> as an async function. Use <code>await</code> for animation methods and JavaScript <code>true</code> and <code>false</code>.</p></div><button type="button" aria-label="Close script editor" onClick={onClose}>×</button></div>
     <div ref={host} className="scene-script-monaco" aria-label="JavaScript script editor" />
     <div className="scene-script-footer"><span className="subtle">State: scene.state, game.state · Elements: scene.elements</span><button type="button" onClick={onClose}>Cancel</button><button type="button" onClick={() => onSave(script)}>Save Script</button></div>
   </div></div>;

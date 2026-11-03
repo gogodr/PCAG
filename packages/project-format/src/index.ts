@@ -3,18 +3,20 @@ export interface ImageAsset { id: string; name: string; kind: 'image'; path: str
 export interface Bounds { x: number; y: number; width: number; height: number }
 export interface Point { x: number; y: number }
 export interface ElementMedia { path: string; kind: 'image' | 'animation'; width: number; height: number; preserveAspectRatio: boolean; loop: boolean; reverse: boolean; scale?: number }
-export interface Element { id: string; name: string; type?: 'box' | 'shape' | 'image'; enabled?: boolean; visible?: boolean; locked?: boolean; bounds: Bounds; vertices?: Point[]; media?: ElementMedia }
-export const playerActions = ['move_to', 'talk_to', 'view', 'push', 'pull', 'open', 'close', 'give', 'use'] as const;
+export const playerActions = ['view', 'move_to', 'talk_to', 'push', 'pull', 'open', 'close', 'give', 'use'] as const;
 export type PlayerAction = typeof playerActions[number];
-export type SceneTrigger = { kind: 'game_load' | 'game_close' | 'scene_load' | 'scene_close' }
+export interface Element { game_id: string; element_id: string; name?: string; type?: 'box' | 'shape' | 'image' | 'overlay'; enabled?: boolean; visible?: boolean; locked?: boolean; availableActions?: PlayerAction[]; bounds: Bounds; vertices?: Point[]; media?: ElementMedia }
+export type SceneTrigger = { kind: 'game_load' | 'game_close' | 'scene_load' | 'scene_close' | 'character_position' }
   | { kind: 'player_action'; action: PlayerAction; targetId: string; itemId?: string }
   | { kind: 'scene_variable_change' | 'game_variable_change'; variableName: string };
 export interface SceneEvent { id: string; name: string; triggers: SceneTrigger[]; script: string }
 export interface SceneManager { events: SceneEvent[] }
+export interface ScenePlayer { characterId: string; position: Point; anchor?: Point; scale: number; layer: number; locked?: boolean }
+export interface WalkableArea { path: string; minScale: number; maxScale: number }
 export type StateValue = boolean | number | string;
 export interface StateVariable { value: StateValue; defaultValue: StateValue }
 export type StateVariables = Record<string, StateVariable>;
-export interface Room { id: string; name: string; width: number; height: number; backgroundAssetId: string; elements: Element[]; sceneState: StateVariables; sceneManager?: SceneManager }
+export interface Room { id: string; name: string; width: number; height: number; backgroundAssetId: string; elements: Element[]; player?: ScenePlayer; walkableArea?: WalkableArea; sceneState: StateVariables; sceneManager?: SceneManager }
 export interface CharacterAnimation { key: string; path: string; height: number; mirrorX: boolean }
 export interface Character { id: string; name: string; referenceAssetId: string; animations: CharacterAnimation[] }
 export interface Project { schemaVersion: 1; id: string; name: string; startRoomId: string; assets: ImageAsset[]; rooms: Room[]; gameState: StateVariables; characters?: Character[] }
@@ -60,11 +62,23 @@ export function validateProject(input: unknown): ValidationResult {
       return { ...fields, elements: hotspots };
     }) };
   }
+  // Older projects stored the stable UUID as `id` and the script key as `name`.
+  if (isRecord(input) && Array.isArray(input.rooms)) input = { ...input, rooms: input.rooms.map(room => {
+    if (!isRecord(room) || !Array.isArray(room.elements)) return room;
+    return { ...room, elements: room.elements.map(element => {
+      if (!isRecord(element) || !('id' in element) || 'game_id' in element) return element;
+      const { id: oldId, name: oldName, ...fields } = element;
+      return { ...fields, game_id: oldId, element_id: oldName, name: oldName };
+    }) };
+  }) };
   const diagnostics: Diagnostic[] = [];
   const issue = (code: Diagnostic['code'], path: string, context: Context, field: string, message: string) => {
     diagnostics.push({ severity: 'error', code, path, target: { ...context, field }, message });
   };
-  const context = (kind: EntityKind, value: RecordValue, roomId: string | null = null): Context => ({ kind, id: typeof value.id === 'string' ? value.id : null, roomId });
+  const context = (kind: EntityKind, value: RecordValue, roomId: string | null = null): Context => {
+    const valueId = kind === 'element' ? value.game_id : value.id;
+    return { kind, id: typeof valueId === 'string' ? valueId : null, roomId };
+  };
   const object = (value: unknown, path: string, ctx: Context, field: string, keys: string[]): value is RecordValue => {
     if (!isRecord(value)) { issue('invalid_type', path, ctx, field, 'Expected a record of named fields.'); return false; }
     for (const key of Object.keys(value)) if (!keys.includes(key)) issue('unknown_field', `${path}/${pointer(key)}`, ctx, field ? `${field}.${key}` : key, `The field "${key}" is not supported by project version 1.`);
@@ -134,26 +148,60 @@ export function validateProject(input: unknown): ValidationResult {
     input.rooms.forEach((room, i) => {
       const path = `/rooms/${i}`;
       const ctx = isRecord(room) ? context('room', room) : root;
-      if (!object(room, path, ctx, '', ['id', 'name', 'width', 'height', 'backgroundAssetId', 'elements', 'sceneState', 'sceneManager'])) return;
+      if (!object(room, path, ctx, '', ['id', 'name', 'width', 'height', 'backgroundAssetId', 'elements', 'player', 'walkableArea', 'sceneState', 'sceneManager'])) return;
       id(room.id, `${path}/id`, ctx, 'id');
       text(room.name, `${path}/name`, ctx, 'name');
       number(room.width, `${path}/width`, ctx, 'width', true);
       number(room.height, `${path}/height`, ctx, 'height', true);
       id(room.backgroundAssetId, `${path}/backgroundAssetId`, ctx, 'backgroundAssetId');
       stateVariables(room.sceneState, `${path}/sceneState`, ctx, 'sceneState');
+      if (room.player !== undefined && object(room.player, `${path}/player`, ctx, 'player', ['characterId', 'position', 'anchor', 'scale', 'layer', 'locked'])) {
+        text(room.player.characterId, `${path}/player/characterId`, ctx, 'player.characterId', true);
+        if (object(room.player.position, `${path}/player/position`, ctx, 'player.position', ['x', 'y'])) {
+          number(room.player.position.x, `${path}/player/position/x`, ctx, 'player.position.x', false);
+          number(room.player.position.y, `${path}/player/position/y`, ctx, 'player.position.y', false);
+        }
+        if (room.player.anchor !== undefined && object(room.player.anchor, `${path}/player/anchor`, ctx, 'player.anchor', ['x', 'y'])) {
+          number(room.player.anchor.x, `${path}/player/anchor/x`, ctx, 'player.anchor.x', false);
+          number(room.player.anchor.y, `${path}/player/anchor/y`, ctx, 'player.anchor.y', false);
+          if (typeof room.player.anchor.x === 'number' && room.player.anchor.x > 1) issue('invalid_value', `${path}/player/anchor/x`, ctx, 'player.anchor.x', 'Anchor X must be between 0 and 1.');
+          if (typeof room.player.anchor.y === 'number' && room.player.anchor.y > 1) issue('invalid_value', `${path}/player/anchor/y`, ctx, 'player.anchor.y', 'Anchor Y must be between 0 and 1.');
+        }
+        number(room.player.scale, `${path}/player/scale`, ctx, 'player.scale', true);
+        number(room.player.layer, `${path}/player/layer`, ctx, 'player.layer', false);
+        if (typeof room.player.layer === 'number' && (!Number.isInteger(room.player.layer) || Array.isArray(room.elements) && room.player.layer > room.elements.length)) issue('invalid_value', `${path}/player/layer`, ctx, 'player.layer', 'Place Player between scene elements.');
+        if (room.player.locked !== undefined && typeof room.player.locked !== 'boolean') issue('invalid_type', `${path}/player/locked`, ctx, 'player.locked', 'locked must be true or false.');
+      }
+      if (room.walkableArea !== undefined && object(room.walkableArea, `${path}/walkableArea`, ctx, 'walkableArea', ['path', 'minScale', 'maxScale'])) {
+        text(room.walkableArea.path, `${path}/walkableArea/path`, ctx, 'walkableArea.path', true);
+        number(room.walkableArea.minScale, `${path}/walkableArea/minScale`, ctx, 'walkableArea.minScale', true);
+        number(room.walkableArea.maxScale, `${path}/walkableArea/maxScale`, ctx, 'walkableArea.maxScale', true);
+        if (typeof room.walkableArea.minScale === 'number' && typeof room.walkableArea.maxScale === 'number' && room.walkableArea.minScale > room.walkableArea.maxScale) issue('invalid_value', `${path}/walkableArea/maxScale`, ctx, 'walkableArea.maxScale', 'Max scale must be at least min scale.');
+      }
       if (list(room.elements, `${path}/elements`, ctx, 'elements')) room.elements.forEach((element, j) => {
         const hp = `${path}/elements/${j}`;
         const hc = isRecord(element) ? context('element', element, ctx.id) : ctx;
-        if (!object(element, hp, hc, '', ['id', 'name', 'type', 'enabled', 'visible', 'locked', 'bounds', 'inspect', 'vertices', 'media'])) return;
-        id(element.id, `${hp}/id`, hc, 'id');
-        text(element.name, `${hp}/name`, hc, 'name');
+        if (!object(element, hp, hc, '', ['game_id', 'element_id', 'name', 'type', 'enabled', 'visible', 'locked', 'availableActions', 'bounds', 'inspect', 'vertices', 'media'])) return;
+        id(element.game_id, `${hp}/game_id`, hc, 'game_id');
+        text(element.element_id, `${hp}/element_id`, hc, 'element_id');
+        if (element.type !== 'overlay' || element.name !== undefined) text(element.name, `${hp}/name`, hc, 'name');
         for (const flag of ['enabled', 'visible', 'locked'] as const) if (element[flag] !== undefined && typeof element[flag] !== 'boolean') issue('invalid_type', `${hp}/${flag}`, hc, flag, `${flag} must be true or false.`);
+        if (element.availableActions !== undefined && list(element.availableActions, `${hp}/availableActions`, hc, 'availableActions')) {
+          const seen = new Set<string>();
+          element.availableActions.forEach((action, index) => {
+            if (!playerActions.includes(action as PlayerAction)) issue('invalid_value', `${hp}/availableActions/${index}`, hc, 'availableActions', 'Choose a supported player action.');
+            else if (seen.has(action as string)) issue('invalid_value', `${hp}/availableActions/${index}`, hc, 'availableActions', 'Each action can appear only once.');
+            seen.add(action as string);
+          });
+        }
         if (element.inspect !== undefined) text(element.inspect, `${hp}/inspect`, hc, 'inspect', true); // Legacy v1 field.
         const kind = element.type ?? 'box';
-        if (!['box', 'shape', 'image'].includes(kind as string)) issue('invalid_value', `${hp}/type`, hc, 'type', 'Choose Box, Shape, or Image.');
+        if (!['box', 'shape', 'image', 'overlay'].includes(kind as string)) issue('invalid_value', `${hp}/type`, hc, 'type', 'Choose Box, Shape, Image, or Overlay.');
         if (object(element.bounds, `${hp}/bounds`, hc, 'bounds', ['x', 'y', 'width', 'height'])) {
           for (const key of ['x', 'y', 'width', 'height']) number(element.bounds[key], `${hp}/bounds/${key}`, hc, `bounds.${key}`, key === 'width' || key === 'height');
+          if (kind === 'overlay' && (element.bounds.x !== 0 || element.bounds.y !== 0 || element.bounds.width !== room.width || element.bounds.height !== room.height)) issue('invalid_value', `${hp}/bounds`, hc, 'bounds', 'Overlay bounds must match the scene background.');
         }
+        if (kind === 'overlay' && element.availableActions !== undefined && Array.isArray(element.availableActions) && element.availableActions.length) issue('invalid_value', `${hp}/availableActions`, hc, 'availableActions', 'Overlays cannot have player actions.');
         if (kind === 'shape') {
           if (list(element.vertices, `${hp}/vertices`, hc, 'vertices')) {
             if (element.vertices.length < 3) issue('invalid_value', `${hp}/vertices`, hc, 'vertices', 'A shape needs at least three vertices.');
@@ -166,18 +214,19 @@ export function validateProject(input: unknown): ValidationResult {
             });
           }
         } else if (element.vertices !== undefined) issue('invalid_value', `${hp}/vertices`, hc, 'vertices', 'Only Shape elements have vertices.');
-        if (kind === 'image') {
+        if (kind === 'image' || kind === 'overlay') {
           const mp = `${hp}/media`;
           if (object(element.media, mp, hc, 'media', ['path', 'kind', 'width', 'height', 'scale', 'preserveAspectRatio', 'loop', 'reverse'])) {
             text(element.media.path, `${mp}/path`, hc, 'media.path', true);
             if (element.media.kind !== 'image' && element.media.kind !== 'animation') issue('invalid_value', `${mp}/kind`, hc, 'media.kind', 'Choose an image or animation.');
+            if (kind === 'overlay' && element.media.kind !== 'image') issue('invalid_value', `${mp}/kind`, hc, 'media.kind', 'An Overlay needs an image source.');
             for (const key of ['width', 'height']) number(element.media[key], `${mp}/${key}`, hc, `media.${key}`, true);
             if (element.media.scale !== undefined) number(element.media.scale, `${mp}/scale`, hc, 'media.scale', true);
             if (element.media.preserveAspectRatio !== undefined && typeof element.media.preserveAspectRatio !== 'boolean') issue('invalid_type', `${mp}/preserveAspectRatio`, hc, 'media.preserveAspectRatio', 'Preserve aspect ratio must be true or false.');
             if (typeof element.media.loop !== 'boolean') issue('invalid_type', `${mp}/loop`, hc, 'media.loop', 'Loop must be true or false.');
             if (typeof element.media.reverse !== 'boolean') issue('invalid_type', `${mp}/reverse`, hc, 'media.reverse', 'Reverse must be true or false.');
           }
-        } else if (element.media !== undefined) issue('invalid_value', `${hp}/media`, hc, 'media', 'Only Image elements have media.');
+        } else if (element.media !== undefined) issue('invalid_value', `${hp}/media`, hc, 'media', 'Only Image and Overlay elements have media.');
       });
       if (room.sceneManager !== undefined && object(room.sceneManager, `${path}/sceneManager`, ctx, 'sceneManager', ['events'])
         && list(room.sceneManager.events, `${path}/sceneManager/events`, ctx, 'sceneManager.events')) room.sceneManager.events.forEach((event, j) => {
@@ -204,7 +253,7 @@ export function validateProject(input: unknown): ValidationResult {
               if (typeof trigger.variableName === 'string' && trigger.variableName && !validStateVariableName(trigger.variableName)) issue('invalid_value', `${tp}/variableName`, ec, 'triggers.variableName', 'Choose a valid state variable.');
             } else {
               object(trigger, tp, ec, 'triggers', ['kind']);
-              if (!['game_load', 'game_close', 'scene_load', 'scene_close'].includes(trigger.kind as string)) issue('invalid_value', `${tp}/kind`, ec, 'triggers.kind', 'Choose a supported trigger.');
+              if (!['game_load', 'game_close', 'scene_load', 'scene_close', 'character_position'].includes(trigger.kind as string)) issue('invalid_value', `${tp}/kind`, ec, 'triggers.kind', 'Choose a supported trigger.');
             }
           });
         }
@@ -237,7 +286,7 @@ export function validateProject(input: unknown): ValidationResult {
   const ids = new Map<string, string>();
   const unique = (value: string, path: string, ctx: Context) => {
     const previous = ids.get(value);
-    if (previous !== undefined) issue('duplicate_id', path, ctx, 'id', `ID "${value}" is already used at ${previous}. Give the new entity its own ID.`);
+    if (previous !== undefined) issue('duplicate_id', path, ctx, ctx.kind === 'element' ? 'game_id' : 'id', `ID "${value}" is already used at ${previous}. Give the new entity its own ID.`);
     else ids.set(value, path);
   };
   unique(project.id, '/id', root);
@@ -262,12 +311,15 @@ export function validateProject(input: unknown): ValidationResult {
     const path = `/rooms/${i}`;
     const rc: Context = { kind: 'room', id: room.id, roomId: null };
     unique(room.id, `${path}/id`, rc);
+    if (room.player?.characterId && !project.characters?.some(character => character.id === room.player!.characterId)) issue('missing_reference', `${path}/player/characterId`, rc, 'player.characterId', 'Choose a character in this project.');
+    if (room.player && (room.player.position.x > room.width || room.player.position.y > room.height)) issue('out_of_bounds', `${path}/player/position`, rc, 'player.position', 'Place Player inside the scene.');
+    if (room.walkableArea?.path && (!/^images\/[A-Za-z0-9_./() -]+\.png$/i.test(room.walkableArea.path) || room.walkableArea.path.split('/').some(part => !part || part === '.' || part === '..'))) issue('invalid_value', `${path}/walkableArea/path`, rc, 'walkableArea.path', 'Choose a project PNG from images.');
     room.sceneManager?.events.forEach((event, j) => {
       const ep = `${path}/sceneManager/events/${j}`;
       const ec: Context = { kind: 'event', id: event.id, roomId: room.id };
       unique(event.id, `${ep}/id`, ec);
       event.triggers.forEach((trigger, k) => {
-        if (trigger.kind === 'player_action' && trigger.targetId && !room.elements.some(element => element.id === trigger.targetId)) issue('missing_reference', `${ep}/triggers/${k}/targetId`, ec, 'triggers.targetId', 'Choose an element in this scene.');
+        if (trigger.kind === 'player_action' && trigger.targetId && !room.elements.some(element => element.game_id === trigger.targetId)) issue('missing_reference', `${ep}/triggers/${k}/targetId`, ec, 'triggers.targetId', 'Choose an element in this scene.');
         if (trigger.kind === 'scene_variable_change' && trigger.variableName && !Object.hasOwn(room.sceneState ?? {}, trigger.variableName)) issue('missing_reference', `${ep}/triggers/${k}/variableName`, ec, 'triggers.variableName', 'Choose a SceneState variable in this scene.');
         if (trigger.kind === 'game_variable_change' && trigger.variableName && !Object.hasOwn(project.gameState ?? {}, trigger.variableName)) issue('missing_reference', `${ep}/triggers/${k}/variableName`, ec, 'triggers.variableName', 'Choose a GameState variable.');
       });
@@ -275,8 +327,8 @@ export function validateProject(input: unknown): ValidationResult {
     if (!assets.has(room.backgroundAssetId)) issue('missing_reference', `${path}/backgroundAssetId`, rc, 'backgroundAssetId', `Background "${room.backgroundAssetId}" is missing. Choose an existing image for "${room.name}".`);
     room.elements.forEach((element, j) => {
       const hp = `${path}/elements/${j}`;
-      const hc: Context = { kind: 'element', id: element.id, roomId: room.id };
-      unique(element.id, `${hp}/id`, hc);
+      const hc: Context = { kind: 'element', id: element.game_id, roomId: room.id };
+      unique(element.game_id, `${hp}/game_id`, hc);
       const b = element.bounds;
       if (b.x > room.width) issue('out_of_bounds', `${hp}/bounds/x`, hc, 'bounds.x', 'Move the element inside the room width.');
       else if (b.width > room.width - b.x) issue('out_of_bounds', `${hp}/bounds/width`, hc, 'bounds.width', 'The element extends past the right edge of the room.');
@@ -286,7 +338,7 @@ export function validateProject(input: unknown): ValidationResult {
         if (vertex.x > room.width) issue('out_of_bounds', `${hp}/vertices/${k}/x`, hc, `vertices.${k}.x`, 'Move the vertex inside the room width.');
         if (vertex.y > room.height) issue('out_of_bounds', `${hp}/vertices/${k}/y`, hc, `vertices.${k}.y`, 'Move the vertex inside the room height.');
       });
-      if (element.type === 'image' && element.media) {
+      if ((element.type === 'image' || element.type === 'overlay') && element.media) {
         const media = element.media;
         if (media.path && (!/^(images|backgrounds|animation)\/[A-Za-z0-9_./() -]+\.(png|jpg|jpeg|webp|svg|gif|json)$/i.test(media.path) || media.path.split('/').some(part => !part || part === '.' || part === '..') || (media.kind === 'animation' ? !/^animation\/.*\.json$/i.test(media.path) : /\.json$/i.test(media.path)))) issue('invalid_value', `${hp}/media/path`, hc, 'media.path', 'Choose a project image or animation atlas.');
       }
@@ -295,9 +347,10 @@ export function validateProject(input: unknown): ValidationResult {
   if (diagnostics.length) return { ok: false, diagnostics };
   const copy = JSON.parse(JSON.stringify(project)) as Project;
   copy.gameState ??= {};
-  copy.rooms.forEach(room => { room.sceneState ??= {}; room.sceneManager ??= { events: [] }; });
+  copy.rooms.forEach(room => { room.sceneState ??= {}; room.sceneManager ??= { events: [] }; room.player ??= { characterId: '', position: { x: Math.round(room.width / 2), y: Math.round(room.height * 0.85) }, scale: 1, layer: room.elements.length }; room.walkableArea ??= { path: '', minScale: 0.5, maxScale: 1.5 }; });
   copy.rooms.forEach(room => room.elements.forEach(element => {
     element.type ??= 'box';
+    element.availableActions ??= element.type === 'overlay' ? [] : ['view'];
     delete (element as Element & { inspect?: string }).inspect;
     if (element.media) { element.media.preserveAspectRatio ??= true; delete element.media.scale; }
   }));

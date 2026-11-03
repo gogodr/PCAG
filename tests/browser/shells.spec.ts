@@ -25,7 +25,10 @@ for (const app of ['creator', 'player'] as const) {
       await page.keyboard.press('Tab');
       await expect(page.getByRole('link', { name: 'PCAG Creator home' })).toBeFocused();
     } else {
-      await expect(page.getByRole('status')).toHaveText('Game view ready.');
+      await expect(page.locator('#status')).toHaveText('Game view ready.');
+      await expect(page.locator('#loading-cover')).toHaveCSS('opacity', '0');
+      await expect(page.locator('#loading-cover')).toHaveCSS('background-color', 'rgba(0, 0, 0, 0.8)');
+      await expect(page.locator('#loading-cover')).toBeEmpty();
       await expect(page.locator('#stage canvas')).toBeVisible();
       await expect(page.locator('#stage canvas')).toHaveAttribute('width', '1600');
     }

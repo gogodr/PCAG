@@ -3,12 +3,14 @@ import type { ChangeEvent } from 'react';
 import { allowedMime, basename, matchesFileSignature, maxAssetBytes, validSegment } from '../../../../../packages/editor-workspace/src/index';
 import type { WorkspaceFile } from '../../../../../packages/editor-workspace/src/index';
 import { animationAtlasFromDataUrl } from '../../../../../packages/animation-atlas/src/index';
-import type { Bounds, Element, ElementMedia, Room } from '../../../../../packages/project-format/src/index';
-import { createId } from '../../../../../packages/project-format/src/index';
+import type { Bounds, Element, ElementMedia, PlayerAction, Room } from '../../../../../packages/project-format/src/index';
+import { createId, playerActions } from '../../../../../packages/project-format/src/index';
 import { movePolygon } from '../../../../../packages/project-format/src/element-geometry';
+import { playerActionLabels } from '../../../../../packages/scene-events/src/index';
 import type { EditorController } from '../../app/useEditorWorkspace';
+import { ElementMediaPreview } from './ElementMediaPreview';
 
-interface Props { room: Room; element: Element; files: WorkspaceFile[]; edit: EditorController['edit']; locked: boolean }
+interface Props { room: Room; element: Element; backgroundUrl: string; files: WorkspaceFile[]; edit: EditorController['edit'] }
 const rounded = (value: number) => Math.round(value * 100) / 100;
 function fitImage(bounds: Bounds, naturalWidth: number, naturalHeight: number, room: Room): void {
   const factor = Math.min(1, (room.width - bounds.x) / naturalWidth, (room.height - bounds.y) / naturalHeight);
@@ -39,12 +41,12 @@ async function imageSize(url: string): Promise<{ width: number; height: number }
   });
 }
 
-export function ElementInspector({ room, element, files, edit, locked }: Props) {
+export function ElementInspector({ room, element, backgroundUrl, files, edit }: Props) {
   const pickerRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState('');
   const update = (change: (element: Element) => void) => edit(next => {
-    const selected = next.project.rooms.find(scene => scene.id === room.id)?.elements.find(item => item.id === element.id);
-    if (selected && selected.locked !== true) change(selected);
+    const selected = next.project.rooms.find(scene => scene.id === room.id)?.elements.find(item => item.game_id === element.game_id);
+    if (selected) change(selected);
   });
   const updateBounds = (field: keyof Bounds, value: number) => {
     if (!Number.isInteger(value)) return;
@@ -61,7 +63,7 @@ export function ElementInspector({ room, element, files, edit, locked }: Props) 
   const chooseFiles = async (event: ChangeEvent<HTMLInputElement>) => {
     const picked = Array.from(event.currentTarget.files ?? []);
     event.currentTarget.value = '';
-    if (!picked.length || !element.media || locked) return;
+    if (!picked.length || !element.media) return;
     try {
       const kind = element.media.kind;
       if (picked.length !== 1) throw new Error(kind === 'image' ? 'Choose one image file.' : 'Choose one animation atlas JSON file.');
@@ -89,35 +91,44 @@ export function ElementInspector({ room, element, files, edit, locked }: Props) 
         naturalWidth = atlas!.frameWidth; naturalHeight = atlas!.frameHeight;
       }
       if (!(naturalWidth > 0 && naturalHeight > 0)) throw new Error('The selected file has no usable dimensions.');
+      if (element.type === 'overlay') {
+        if (!backgroundUrl) throw new Error('Choose a scene background before choosing an Overlay image.');
+        const background = await imageSize(backgroundUrl);
+        if (naturalWidth !== background.width || naturalHeight !== background.height) throw new Error(`Overlay image must be ${background.width} × ${background.height} pixels to match the background.`);
+      }
       edit(next => {
-        const selected = next.project.rooms.find(scene => scene.id === room.id)?.elements.find(item => item.id === element.id);
-        if (!selected?.media || selected.locked === true) return;
+        const selected = next.project.rooms.find(scene => scene.id === room.id)?.elements.find(item => item.game_id === element.game_id);
+        if (!selected?.media) return;
         for (const file of additions) {
           next.files.push(file);
           if (kind === 'image') next.project.assets.push({ id: file.id, name: basename(file.path), kind: 'image', path: file.path });
         }
         selected.media.path = selectedPath;
         selected.media.width = naturalWidth; selected.media.height = naturalHeight;
-        fitImage(selected.bounds, naturalWidth, naturalHeight, room);
+        if (selected.type !== 'overlay') fitImage(selected.bounds, naturalWidth, naturalHeight, room);
       });
       setError('');
     } catch (reason) { setError(reason instanceof Error ? reason.message : 'Could not choose a file.'); }
   };
   const media = element.media;
-  return <fieldset className="element-inspector" disabled={locked} aria-label="Element inspector">
-    {locked && <p className="subtle element-locked-note">Unlock this element in Elements to edit it.</p>}
-    <div className="element-inspector-heading"><h3>{element.type === 'shape' ? 'Shape' : element.type === 'image' ? 'Image' : 'Box'} element</h3><code title={element.id}>{element.id}</code></div>
-    <label className="element-name-field">Name<input aria-label="Element name" value={element.name ?? ''} onChange={event => { const name = event.currentTarget.value; update(next => { next.name = name; }); }} /></label>
+  return <fieldset className="element-inspector" data-kind={element.type ?? 'box'} aria-label="Element inspector">
+    <div className="element-inspector-heading"><h3>{element.type === 'shape' ? 'Shape' : element.type === 'image' ? 'Image' : element.type === 'overlay' ? 'Overlay' : 'Box'} element</h3><span>Game ID <code title={element.game_id}>{element.game_id}</code></span></div>
+    <section className="element-inspector-group element-identity-group" aria-label="Identity"><h4>Identity</h4><div className="element-identity-fields">
+      <label>Element ID<input aria-label="Element ID" value={element.element_id ?? ''} onChange={event => { const value = event.currentTarget.value; update(next => { next.element_id = value; }); }} /></label>
+      {element.type !== 'overlay' && <label>Name<input aria-label="Element name" value={element.name ?? ''} onChange={event => { const value = event.currentTarget.value; update(next => { next.name = value; }); }} /></label>}
+    </div></section>
+    {element.type !== 'overlay' && <section className="element-inspector-group" aria-label="Available Actions"><h4>Available Actions</h4><div className="element-actions-grid">{playerActions.map(action => <label key={action} className="element-checkbox"><input type="checkbox" aria-label={`Available action ${playerActionLabels[action].replace('Player: ', '')}`} checked={(element.availableActions ?? ['view']).includes(action)} onChange={event => { const checked = event.currentTarget.checked; update(next => { const selected = new Set<PlayerAction>(next.availableActions ?? ['view']); if (checked) selected.add(action); else selected.delete(action); next.availableActions = playerActions.filter(candidate => selected.has(candidate)); }); }} />{playerActionLabels[action].replace('Player: ', '')}</label>)}</div></section>}
     {media && <section className="element-inspector-group" aria-label="Element source"><h4>Source</h4><div className="element-media-controls">
-      <label>Type<select aria-label="Element source type" value={media.kind} onChange={event => { setError(''); update(next => { if (next.media) { next.media.kind = event.target.value as 'image' | 'animation'; next.media.path = ''; } }); }}><option value="image">Image</option><option value="animation">Animation</option></select></label>
+      {element.type !== 'overlay' && <label>Type<select aria-label="Element source type" value={media.kind} onChange={event => { setError(''); update(next => { if (next.media) { next.media.kind = event.target.value as 'image' | 'animation'; next.media.path = ''; } }); }}><option value="image">Image</option><option value="animation">Animation</option></select></label>}
       <div className="element-file-picker"><span title={media.path}>{media.path ? basename(media.path) : 'No file selected'}</span><button type="button" aria-label="Choose element file" onClick={() => pickerRef.current?.click()}>Choose {media.kind === 'image' ? 'image' : 'animation'}…</button><input ref={pickerRef} type="file" aria-label="Element files" accept={media.kind === 'image' ? '.png,.jpg,.jpeg,.webp,.svg,.gif' : '.json'} onChange={event => { void chooseFiles(event); }} hidden /></div>
     </div>{media.kind === 'animation' && <p className="subtle element-picker-help">The atlas PNG is loaded from the same project folder.</p>}</section>}
-    <section className="element-inspector-group" aria-label="Element geometry"><h4>Position & size</h4>
+    {media?.path && <ElementMediaPreview media={media} files={files} />}
+    {element.type === 'overlay' ? <p className="subtle">Aligned to the background and sized to fill the scene. Choose an image with the same pixel dimensions as the background.</p> : <section className="element-inspector-group" aria-label="Element geometry"><h4>Position & size</h4>
       <div className="element-inspector-fields">{(['x', 'y', 'width', 'height'] as const).filter(field => element.type === 'box' || !element.type || field === 'x' || field === 'y').map(field => <label key={field}>{field.toUpperCase()}<input type="number" aria-label={`Element ${field}`} min={field === 'width' || field === 'height' ? 1 : 0} value={element.bounds[field]} onChange={event => updateBounds(field, event.currentTarget.valueAsNumber)} /></label>)}
       {media && <><label>Width<input type="number" aria-label="Element width" min="0.01" step="any" value={element.bounds.width} onChange={event => { const value = event.currentTarget.valueAsNumber; if (!Number.isFinite(value) || value <= 0) return; update(next => { if (next.media) resizeImage(next.bounds, next.media, 'width', value, room); }); }} /></label><label>Height<input type="number" aria-label="Element height" min="0.01" step="any" value={element.bounds.height} onChange={event => { const value = event.currentTarget.valueAsNumber; if (!Number.isFinite(value) || value <= 0) return; update(next => { if (next.media) resizeImage(next.bounds, next.media, 'height', value, room); }); }} /></label></>}</div>
       {media && <label className="element-checkbox"><input type="checkbox" aria-label="Preserve aspect ratio" checked={media.preserveAspectRatio} onChange={event => update(next => { if (!next.media) return; next.media.preserveAspectRatio = event.target.checked; if (event.target.checked) resizeImage(next.bounds, next.media, 'width', next.bounds.width, room); })} />Preserve aspect ratio</label>}
       {element.type === 'shape' && <p className="subtle element-shape-help">Drag vertices; click an edge to add one; Alt+click a vertex to remove it. Drag inside to move the shape.</p>}
-    </section>
+    </section>}
     {media?.kind === 'animation' && <section className="element-inspector-group" aria-label="Animation settings"><h4>Playback</h4><div className="element-playback-controls"><label>Run<select aria-label="Element playback" value={media.loop ? 'loop' : 'once'} onChange={event => update(next => { if (next.media) next.media.loop = event.target.value === 'loop'; })}><option value="once">Single run</option><option value="loop">Loop</option></select></label><label className="element-checkbox"><input type="checkbox" aria-label="Reverse animation" checked={media.reverse} onChange={event => update(next => { if (next.media) next.media.reverse = event.target.checked; })} />Reverse animation</label></div></section>}
     {error && <p role="alert">{error}</p>}
   </fieldset>;
